@@ -8,11 +8,13 @@
 
 struct transform_videomixer::device_context_resources : media_buffer_texture
 {
+    bool drawing;
     CComPtr<ID2D1DeviceContext> ctx;
     // the texture that is bound to this brush must be immutable;
     // it is assumed that the input samples are immutable
     CComPtr<ID2D1BitmapBrush1> bitmap_brush;
 
+    device_context_resources() : drawing(false) {}
     virtual ~device_context_resources() {}
     void uninitialize() {this->media_buffer_texture::uninitialize();}
 };
@@ -318,6 +320,7 @@ void stream_videomixer::mix(out_arg_t& out_arg, args_t& packets,
                     frames[index].buffer = frame;
 
                     frame->ctx->BeginDraw();
+                    frame->drawing = true;
                     frame->ctx->SetTarget(frame->bitmap);
                     frame->ctx->Clear(D2D1::ColorF(D2D1::ColorF::Black));
                 }
@@ -422,30 +425,22 @@ void stream_videomixer::mix(out_arg_t& out_arg, args_t& packets,
         }
     }
 
+done:
     // call end draw for every frame
     for(frame_unit i = 0; i < frame_count; i++)
     {
         device_context_resources_t frame =
             std::static_pointer_cast<transform_videomixer::device_context_resources>(
                 frames[i].buffer);
-        if(frame)
-            frame->ctx->EndDraw();
+        if(frame && frame->drawing)
+        {
+            frame->drawing = false;
+            const HRESULT hr2 = frame->ctx->EndDraw();
+            if(FAILED(hr2) && hr == S_OK)
+                hr = hr2;
+        }
     }
 
-    {
-        transform_videomixer::buffer_pool_video_frames_t::scoped_lock lock(
-            this->transform->buffer_pool_video_frames->mutex);
-        sample = this->transform->buffer_pool_video_frames->acquire_buffer();
-    }
-    assert_(end > 0);
-    sample->initialize(std::move(frames), first, end);
-
-    out_arg = std::make_optional<out_arg_t::value_type>();
-    out_arg->sample = std::move(sample);
-    out_arg->has_frames = has_frames;
-
-    // TODO: test this
-done:
     if(FAILED(hr))
     {
         if(hr != D2DERR_RECREATE_TARGET)
@@ -455,6 +450,20 @@ done:
             PRINT_ERROR(hr);
 
         this->transform->request_reinitialization(this->transform->ctrl_pipeline);
+    }
+    else
+    {
+        {
+            transform_videomixer::buffer_pool_video_frames_t::scoped_lock lock(
+                this->transform->buffer_pool_video_frames->mutex);
+            sample = this->transform->buffer_pool_video_frames->acquire_buffer();
+        }
+        assert_(end > 0);
+        sample->initialize(std::move(frames), first, end);
+
+        out_arg = std::make_optional<out_arg_t::value_type>();
+        out_arg->sample = std::move(sample);
+        out_arg->has_frames = has_frames;
     }
 }
 
