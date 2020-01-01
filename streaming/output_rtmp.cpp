@@ -189,6 +189,10 @@ void output_rtmp::initialize(
     if(!this->rtmp)
         CHECK_HR(hr = E_UNEXPECTED);
 
+    CHECK_HR(hr = MFGetAttributeRatio(
+        this->video_type, MF_MT_FRAME_RATE, &this->fps_num, &this->fps_den));
+    CHECK_HR(hr = this->video_type->GetUINT32(MF_MT_AVG_BITRATE, &this->bitrate));
+
     // The stream should contain raw_data_block elements only
     UINT32 aac_payload_type = MFGetAttributeUINT32(this->audio_type, MF_MT_AAC_PAYLOAD_TYPE, 0);
     if(aac_payload_type != 0)
@@ -587,6 +591,33 @@ std::size_t output_rtmp::find_start_code_prefix(
     return pos;*/
 }
 
+void output_rtmp::add_padding_nalus(UINT32 target_bitrate, double fps, std::string& payload)
+{
+    const UINT32 byterate = (UINT32)(target_bitrate / 8.0 / fps);
+    const UINT32 current_byterate = (UINT32)payload.size();
+    const int bytes_needed = 
+        (int)byterate - (int)current_byterate - sizeof(uint32_t) - sizeof(char);
+
+    if(bytes_needed <= 0)
+        return;
+
+    // TODO: data discontinuity probably needs to be taken into account
+
+    /*
+    12  Filler data
+        The only restriction of filler data NAL units within an
+        access unit is that they shall not precede the first VCL
+        NAL unit with the same access unit.
+    */
+
+    const uint32_t nalu_size = _byteswap_ulong(bytes_needed + sizeof(char));
+    constexpr char nalu_type = 12; // filler data
+
+    payload.append((const char*)&nalu_size, sizeof(nalu_size));
+    payload += nalu_type;
+    payload.append(bytes_needed, '\xff');
+}
+
 void output_rtmp::send_rtmp_video_packets(
     const std::string_view& data, LONGLONG pts, LONGLONG dts, bool key_frame)
 {
@@ -625,7 +656,6 @@ void output_rtmp::send_rtmp_video_packets(
     };
 #pragma pack(pop)
 
-    // TODO: padding nalus could be used to stabilize the output bitrate
     // TODO: currently a 4 byte start code prefix is assumed
 
     std::string payload;
@@ -720,6 +750,9 @@ void output_rtmp::send_rtmp_video_packets(
 
         nalu_start = next_nalu_start;
     }
+
+    // add filler data
+    add_padding_nalus(this->bitrate, (double)this->fps_num / this->fps_den, payload);
 
     // send the payload
     const uint32_t rtmp_body_size =

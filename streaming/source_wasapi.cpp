@@ -431,9 +431,6 @@ void source_wasapi::initialize(const control_class_t& ctrl_pipeline,
     CHECK_HR(hr = this->audio_client->Start());
     this->started = true;
 
-    // new capture is queued on component start, so that
-    // the last_captured_frame_end variable isn't accessed before assigned
-
 done:
     if(engine_format)
         CoTaskMemFree(engine_format);
@@ -453,14 +450,9 @@ stream_wasapi::stream_wasapi(const source_wasapi_t& source) :
 {
 }
 
-void stream_wasapi::on_component_start(time_unit t)
+void stream_wasapi::on_component_start(time_unit)
 {
     HRESULT hr = S_OK;
-
-    this->source->last_captured_frame_end = convert_to_frame_unit(t,
-        this->source->session->frame_rate_num, 
-        this->source->session->frame_rate_den);
-
     CHECK_HR(hr = this->source->queue_new_capture());
 
 done:

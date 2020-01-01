@@ -32,7 +32,6 @@ private:
     std::shared_ptr<buffer_pool_memory_t> buffer_pool_memory;
     std::shared_ptr<buffer_pool_audio_frames_t> buffer_pool_audio_frames;
     media_sample_audio_mixer_frames_t captured_audio;
-    frame_unit last_captured_frame_end;
 
     bool started, capture, in_wait_queue;
 

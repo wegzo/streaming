@@ -12,7 +12,6 @@
 #define RECORDING_STOPPED_MESSAGE (WM_APP + 1)
 
 // TODO: write the rest of the packets in destructor(end of sequence could be sent by using flv packets)
-// TODO: bitrate should be stabilized by adding filler nalus to the stream
 
 struct RTMP;
 
@@ -25,6 +24,7 @@ private:
     RTMP* rtmp;
     CComPtr<IMFMediaType> video_type;
     CComPtr<IMFMediaType> audio_type;
+    UINT32 bitrate, fps_num, fps_den;
     std::mutex write_lock;
 
     std::deque<CComPtr<IMFSample>> video_samples, audio_samples;
@@ -37,6 +37,9 @@ private:
         int start_code_prefix_len) const;
     std::string create_audio_specific_config() const;
     static std::size_t find_start_code_prefix(const std::string_view&, int& start_code_prefix_len);
+
+    // adds filler data nalus to a frame to hit the target bitrate
+    static void add_padding_nalus(UINT32 target_bitrate, double fps, std::string&);
 
     // pts and dts are in 100 nanosecond units
     void send_rtmp_video_packets(const std::string_view&, LONGLONG pts, LONGLONG dts, bool key_frame);
