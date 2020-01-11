@@ -396,6 +396,18 @@ LRESULT gui_sourcedlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
     this->btn_addsource.Attach(this->GetDlgItem(IDC_ADDSRC));
     this->btn_removesource.Attach(this->GetDlgItem(IDC_REMOVESRC));
     this->wnd_sourcetree.Attach(this->GetDlgItem(IDC_SOURCETREE));
+    this->btn_srcup.Attach(this->GetDlgItem(IDC_SRCUP));
+    this->btn_srcdown.Attach(this->GetDlgItem(IDC_SRCDOWN));
+
+    this->font_srcupdown = ::CreateFont(0, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+        VARIABLE_PITCH, L"Webdings");
+
+    this->btn_srcup.SetFont(this->font_srcupdown);
+    this->btn_srcdown.SetFont(this->font_srcupdown);
+
+    this->btn_srcup.SetWindowTextW(L"\x35");
+    this->btn_srcdown.SetWindowTextW(L"\x36");
 
     return TRUE;
 }

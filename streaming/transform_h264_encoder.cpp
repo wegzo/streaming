@@ -41,6 +41,11 @@ public:
     ULONG STDMETHODCALLTYPE Release() {return IUnknownImpl::Release();}
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv)
     {
+        // workaround for intel encoder where the encoder would try to use the directx
+        // buffer that has been allocated by a separate adapter
+        if(this->use_system_memory && riid == __uuidof(IMFDXGIBuffer))
+            return E_NOINTERFACE;
+
         return this->media_buffer->QueryInterface(riid, ppv);
     }
 

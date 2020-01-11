@@ -117,6 +117,6 @@ done:
     */
     this->recording_initiator.SendNotifyMessageW(RECORDING_STOPPED_MESSAGE, 1);
 
-    if(FAILED(hr) && hr != MF_E_SINK_NO_SAMPLES_PROCESSED)
+    if(FAILED(hr) && hr != MF_E_SINK_NO_SAMPLES_PROCESSED && hr != MF_E_SINK_HEADERS_NOT_FOUND)
         throw HR_EXCEPTION(hr);
 }

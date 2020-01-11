@@ -57,7 +57,8 @@ private:
     int video_counter, audio_counter;
 
     control_pipeline_t ctrl_pipeline;
-    CButton btn_addsource, btn_removesource;
+    CButton btn_addsource, btn_removesource, btn_srcup, btn_srcdown;
+    CFont font_srcupdown;
     CTreeViewCtrlEx wnd_sourcetree;
     bool do_not_reselect;
     control_scene* current_active_scene;
