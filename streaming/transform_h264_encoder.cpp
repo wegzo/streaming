@@ -136,6 +136,37 @@ transform_h264_encoder::~transform_h264_encoder()
     }
 }
 
+HRESULT transform_h264_encoder::set_color_space(
+    const CComPtr<IMFMediaType>& type, DXGI_COLOR_SPACE_TYPE color_space)
+{
+    HRESULT hr = S_OK;
+
+    switch(color_space)
+    {
+    case DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709:
+        CHECK_HR(hr = type->SetUINT32(MF_MT_VIDEO_PRIMARIES, MFVideoPrimaries_BT709));
+        CHECK_HR(hr = type->SetUINT32(MF_MT_TRANSFER_FUNCTION, MFVideoTransFunc_709));
+        CHECK_HR(hr = type->SetUINT32(MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT709));
+        CHECK_HR(hr = type->SetUINT32(MF_MT_VIDEO_CHROMA_SITING, MFVideoChromaSubsampling_MPEG2));
+        CHECK_HR(hr = type->SetUINT32(MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_0_255));
+
+        break;
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709:
+        CHECK_HR(hr = type->SetUINT32(MF_MT_VIDEO_PRIMARIES, MFVideoPrimaries_BT709));
+        CHECK_HR(hr = type->SetUINT32(MF_MT_TRANSFER_FUNCTION, MFVideoTransFunc_709));
+        CHECK_HR(hr = type->SetUINT32(MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT709));
+        CHECK_HR(hr = type->SetUINT32(MF_MT_VIDEO_CHROMA_SITING, MFVideoChromaSubsampling_MPEG2));
+        CHECK_HR(hr = type->SetUINT32(MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_16_235));
+
+        break;
+    default:
+        CHECK_HR(hr = E_UNEXPECTED);
+    }
+
+done:
+    return hr;
+}
+
 HRESULT transform_h264_encoder::set_input_stream_type()
 {
     HRESULT hr = S_OK;
@@ -143,11 +174,9 @@ HRESULT transform_h264_encoder::set_input_stream_type()
     CComPtr<IMFMediaType> input_type;
     CHECK_HR(hr = MFCreateMediaType(&input_type));
     CHECK_HR(hr = input_type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video));
-
     CHECK_HR(hr = input_type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_NV12));
-    /*CHECK_HR(hr = input_type->SetUINT32(MF_MT_VIDEO_PRIMARIES, MFVideoPrimaries_BT709));
-    CHECK_HR(hr = input_type->SetUINT32(MF_MT_VIDEO_CHROMA_SITING, MFVideoChromaSubsampling_Cosited));
-    CHECK_HR(hr = input_type->SetUINT32(MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_16_235));*/
+    CHECK_HR(hr = set_color_space(input_type, this->input_color_space));
+
     /*CHECK_HR(hr = input_type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32));*/
 
     CHECK_HR(hr = MFSetAttributeRatio(input_type, MF_MT_FRAME_RATE, 
@@ -167,9 +196,11 @@ HRESULT transform_h264_encoder::set_output_stream_type()
 {
     HRESULT hr = S_OK;
     this->output_type = NULL;
+
     CHECK_HR(hr = MFCreateMediaType(&this->output_type));
     CHECK_HR(hr = this->output_type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video));
     CHECK_HR(hr = this->output_type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_H264));
+    CHECK_HR(hr = set_color_space(this->output_type, this->input_color_space));
     CHECK_HR(hr = this->output_type->SetUINT32(MF_MT_AVG_BITRATE, this->avg_bitrate));
     CHECK_HR(hr = MFSetAttributeRatio(this->output_type, MF_MT_FRAME_RATE, 
         this->frame_rate_num, this->frame_rate_den));
@@ -644,6 +675,7 @@ void transform_h264_encoder::initialize(const control_class_t& ctrl_pipeline,
     UINT32 frame_width, UINT32 frame_height,
     UINT32 avg_bitrate, UINT32 quality_vs_speed,
     eAVEncH264VProfile encoder_profile,
+    DXGI_COLOR_SPACE_TYPE input_color_space,
     const CLSID* clsid,
     bool software)
 {
@@ -659,6 +691,7 @@ void transform_h264_encoder::initialize(const control_class_t& ctrl_pipeline,
     this->avg_bitrate = avg_bitrate;
     this->quality_vs_speed = quality_vs_speed;
     this->encoder_profile = encoder_profile;
+    this->input_color_space = input_color_space;
 
     CComPtr<IMFAttributes> attributes;
     UINT count = 0;

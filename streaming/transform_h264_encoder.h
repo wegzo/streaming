@@ -60,6 +60,7 @@ private:
     UINT32 frame_width, frame_height;
     UINT32 avg_bitrate, quality_vs_speed;
     eAVEncH264VProfile encoder_profile;
+    DXGI_COLOR_SPACE_TYPE input_color_space;
 
     DWORD input_id, output_id;
     MFT_INPUT_STREAM_INFO input_stream_info;
@@ -93,6 +94,7 @@ private:
     time_unit last_time_stamp, last_time_stamp2;
     int last_packet;
 
+    static HRESULT set_color_space(const CComPtr<IMFMediaType>&, DXGI_COLOR_SPACE_TYPE);
     HRESULT set_input_stream_type();
     HRESULT set_output_stream_type();
     HRESULT set_encoder_parameters();
@@ -130,6 +132,7 @@ public:
         UINT32 frame_width, UINT32 frame_height,
         UINT32 avg_bitrate, UINT32 quality_vs_speed,
         eAVEncH264VProfile,
+        DXGI_COLOR_SPACE_TYPE input_color_space,
         const CLSID*,
         bool software);
     media_stream_t create_stream(media_message_generator_t&&);

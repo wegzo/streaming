@@ -203,6 +203,7 @@ void control_pipeline::activate_components()
                 this->get_current_config().config_video.bitrate * 1000,
                 this->get_current_config().config_video.quality_vs_speed,
                 this->get_current_config().config_video.h264_video_profile,
+                this->get_current_config().config_video.color_space,
                 this->get_current_config().config_video.encoder_use_default ? nullptr :
                     &this->get_current_config().config_video.encoder,
                 false);
@@ -224,6 +225,7 @@ void control_pipeline::activate_components()
                     this->get_current_config().config_video.bitrate * 1000,
                     this->get_current_config().config_video.quality_vs_speed,
                     this->get_current_config().config_video.h264_video_profile,
+                    this->get_current_config().config_video.color_space,
                     this->get_current_config().config_video.encoder_use_default ? nullptr :
                         &this->get_current_config().config_video.encoder,
                     false);
@@ -244,6 +246,7 @@ void control_pipeline::activate_components()
                     this->get_current_config().config_video.bitrate * 1000,
                     this->get_current_config().config_video.quality_vs_speed,
                     this->get_current_config().config_video.h264_video_profile,
+                    this->get_current_config().config_video.color_space,
                     this->get_current_config().config_video.encoder_use_default ? nullptr :
                         &this->get_current_config().config_video.encoder,
                     true);

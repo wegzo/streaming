@@ -272,8 +272,6 @@ LRESULT gui_configdlg_video::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPAR
 
     this->wnd_color_space.AddString(L"DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709");
     this->wnd_color_space.AddString(L"DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709");
-    this->wnd_color_space.AddString(L"DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601");
-    this->wnd_color_space.AddString(L"DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601");
 
     this->wnd_color_space.SetDroppedWidth(this->wnd_color_space.GetDroppedWidth() + dropped_width_increase);
 
@@ -390,12 +388,6 @@ LRESULT gui_configdlg_video::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPAR
         break;
     case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709:
         this->wnd_color_space.SetCurSel(1);
-        break;
-    case DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601:
-        this->wnd_color_space.SetCurSel(2);
-        break;
-    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601:
-        this->wnd_color_space.SetCurSel(3);
         break;
     default:
         throw HR_EXCEPTION(E_UNEXPECTED);
