@@ -29,9 +29,6 @@ bool gui_previewwnd::select_item(CPoint point, bool& first_selection, bool selec
     first_selection = false;
 
     // select item
-    if(this->ctrl_pipeline.preview_control->is_disabled())
-        return false;
-
     control_scene* scene = this->ctrl_pipeline.root_scene->get_selected_scene();
     if(!scene || scene->get_video_controls().empty())
         return false;
@@ -126,18 +123,13 @@ void gui_previewwnd::OnDestroy()
 
 LRESULT gui_previewwnd::OnSize(UINT /*nType*/, CSize /*Extent*/)
 {
-    if(!this->ctrl_pipeline.preview_control->is_disabled())
-    {
-        this->update_size();
-        /*this->wnd_parent.wnd_maindlg.RedrawWindow();*/
-    }
+    this->update_size();
+    /*this->wnd_parent.wnd_maindlg.RedrawWindow();*/
     return 0;
 }
 
 void gui_previewwnd::OnRButtonDown(UINT /*nFlags*/, CPoint /*point*/)
 {
-    if(this->ctrl_pipeline.preview_control->is_disabled())
-        return;
     if(this->ctrl_pipeline.get_selected_controls().empty())
         return;
     control_video* video_control = dynamic_cast<control_video*>(
@@ -224,8 +216,6 @@ void gui_previewwnd::OnLButtonUp(UINT /*nFlags*/, CPoint /*point*/)
 
 void gui_previewwnd::OnMouseMove(UINT /*nFlags*/, CPoint point)
 {
-    if(this->ctrl_pipeline.preview_control->is_disabled())
-        return;
     if(this->ctrl_pipeline.get_selected_controls().empty())
         return;
     control_video* video_control = dynamic_cast<control_video*>(

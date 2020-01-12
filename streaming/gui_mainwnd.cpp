@@ -236,7 +236,7 @@ void gui_mainwnd::OnActivate(UINT nState, BOOL bMinimized, CWindow /*wndOther*/)
     {
         this->was_minimized = bMinimized;
 
-        if(!this->ctrl_pipeline->preview_control->is_disabled())
+        if(this->ctrl_pipeline->preview_control->is_active())
             this->ctrl_pipeline->preview_control->set_state(!bMinimized);
     }
 
