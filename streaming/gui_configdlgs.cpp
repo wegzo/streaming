@@ -152,6 +152,25 @@ bool gui_configdlg_video::should_update_settings()
         throw std::invalid_argument("");
     }
 
+    // color space
+    switch(this->wnd_color_space.GetCurSel())
+    {
+    case 0:
+        this->config_video.color_space = DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709;
+        break;
+    case 1:
+        this->config_video.color_space = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709;
+        break;
+    case 2:
+        this->config_video.color_space = DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601;
+        break;
+    case 3:
+        this->config_video.color_space = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601;
+        break;
+    default:
+        throw std::invalid_argument("");
+    }
+
     return std::memcmp(
         &this->config_video, 
         &this->ctrl_pipeline->get_current_config().config_video,
@@ -222,7 +241,7 @@ LRESULT gui_configdlg_video::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPAR
 {
     HRESULT hr = S_OK;
 
-    constexpr int dropped_width_increase = 100;
+    constexpr int dropped_width_increase = 120;
 
     this->wnd_fps_num.Attach(this->GetDlgItem(IDC_EDIT3));
     this->wnd_fps_den.Attach(this->GetDlgItem(IDC_EDIT4));
@@ -233,6 +252,7 @@ LRESULT gui_configdlg_video::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPAR
     this->wnd_quality_vs_speed.Attach(this->GetDlgItem(IDC_EDIT5));
     this->wnd_adapter.Attach(this->GetDlgItem(IDC_COMBO2));
     this->wnd_encoder.Attach(this->GetDlgItem(IDC_COMBO4));
+    this->wnd_color_space.Attach(this->GetDlgItem(IDC_COMBO6));
 
     this->wnd_video_resolution.AddString(L"426x240");
     this->wnd_video_resolution.AddString(L"640x360");
@@ -249,6 +269,13 @@ LRESULT gui_configdlg_video::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPAR
     this->wnd_mpeg2_profile.AddString(L"Simple Profile");
     this->wnd_mpeg2_profile.AddString(L"Main Profile");
     this->wnd_mpeg2_profile.AddString(L"High Profile");
+
+    this->wnd_color_space.AddString(L"DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709");
+    this->wnd_color_space.AddString(L"DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709");
+    this->wnd_color_space.AddString(L"DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601");
+    this->wnd_color_space.AddString(L"DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601");
+
+    this->wnd_color_space.SetDroppedWidth(this->wnd_color_space.GetDroppedWidth() + dropped_width_increase);
 
     this->set_splitter(this->wnd_static_splitter);
 
@@ -354,6 +381,25 @@ LRESULT gui_configdlg_video::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPAR
     this->wnd_bitrate.SetWindowTextW(std::to_wstring(config.config_video.bitrate).c_str());
     this->wnd_quality_vs_speed.SetWindowTextW(
         std::to_wstring(config.config_video.quality_vs_speed).c_str());
+
+    // select the color space
+    switch(config.config_video.color_space)
+    {
+    case DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709:
+        this->wnd_color_space.SetCurSel(0);
+        break;
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709:
+        this->wnd_color_space.SetCurSel(1);
+        break;
+    case DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601:
+        this->wnd_color_space.SetCurSel(2);
+        break;
+    case DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601:
+        this->wnd_color_space.SetCurSel(3);
+        break;
+    default:
+        throw HR_EXCEPTION(E_UNEXPECTED);
+    }
 
     if(this->ctrl_pipeline->is_recording())
         EnumChildWindows(*this, [](HWND hwnd, LPARAM) -> BOOL

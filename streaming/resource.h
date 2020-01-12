@@ -38,6 +38,7 @@
 #define IDC_EDIT2                       1040
 #define IDC_COMBO5                      1040
 #define IDC_EDIT5                       1041
+#define IDC_COMBO6                      1042
 #define IDC_COMBO2                      1045
 #define IDC_LIST1                       1046
 #define IDC_START_STREAMING             1047

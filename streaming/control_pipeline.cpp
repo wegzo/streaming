@@ -266,6 +266,7 @@ void control_pipeline::activate_components()
             this->get_current_config().config_video.height_frame,
             this->get_current_config().config_video.width_frame,
             this->get_current_config().config_video.height_frame,
+            this->get_current_config().config_video.color_space,
             this->d3d11dev, this->devctx);
         this->color_converter_transform = color_converter_transform;
     }

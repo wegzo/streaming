@@ -33,6 +33,7 @@ void transform_color_converter::initialize(
     const control_class_t& ctrl_pipeline,
     UINT32 frame_width_in, UINT32 frame_height_in,
     UINT32 frame_width_out, UINT32 frame_height_out,
+    DXGI_COLOR_SPACE_TYPE color_space,
     const CComPtr<ID3D11Device>& d3d11dev, ID3D11DeviceContext* devctx)
 {
     HRESULT hr = S_OK;
@@ -45,6 +46,7 @@ void transform_color_converter::initialize(
     this->frame_height_in = frame_height_in;
     this->frame_width_out = frame_width_out;
     this->frame_height_out = frame_height_out;
+    this->color_space = color_space;
     
     // check the supported capabilities of the video processor
     D3D11_VIDEO_PROCESSOR_CONTENT_DESC desc;
@@ -116,10 +118,10 @@ stream_color_converter::stream_color_converter(const transform_color_converter_t
         // DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709 for full range
         video_context->VideoProcessorSetOutputColorSpace1(
             this->videoprocessor, 
-            /*DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601*/
-            DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709);
+            this->transform->color_space);
 
         // srgb
+        // TODO: hdr input formats need to be handled somehow
         video_context->VideoProcessorSetStreamColorSpace1(
             this->videoprocessor, 0, DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709);
     }

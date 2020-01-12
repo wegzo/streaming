@@ -65,6 +65,7 @@ private:
     CStatic wnd_static_splitter;
     CEdit wnd_bitrate, wnd_quality_vs_speed;
     CComboBox wnd_adapter, wnd_encoder;
+    CComboBox wnd_color_space;
 
     std::vector<UINT> adapters;
     std::vector<CLSID> encoders;

@@ -33,6 +33,7 @@ private:
 
     UINT32 frame_width_in, frame_height_in;
     UINT32 frame_width_out, frame_height_out;
+    DXGI_COLOR_SPACE_TYPE color_space;
 
     context_mutex_t context_mutex;
 public:
@@ -42,6 +43,7 @@ public:
     void initialize(const control_class_t&,
         UINT32 frame_width_in, UINT32 frame_height_in,
         UINT32 frame_width_out, UINT32 frame_height_out,
+        DXGI_COLOR_SPACE_TYPE,
         const CComPtr<ID3D11Device>&, ID3D11DeviceContext* devctx);
     media_stream_t create_stream();
 };
