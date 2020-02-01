@@ -35,6 +35,10 @@ violation of the assumption makes the pipeline not work
 #undef max
 #undef min
 
+#ifndef _WIN64
+#pragma message("--------- WARNING: x86 target is untested ---------")
+#endif
+
 #define SECOND_IN_TIME_UNIT 10000000
 
 //extern const GUID media_sample_lifetime_tracker_guid;

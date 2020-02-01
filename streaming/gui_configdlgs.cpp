@@ -161,12 +161,6 @@ bool gui_configdlg_video::should_update_settings()
     case 1:
         this->config_video.color_space = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709;
         break;
-    case 2:
-        this->config_video.color_space = DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601;
-        break;
-    case 3:
-        this->config_video.color_space = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601;
-        break;
     default:
         throw std::invalid_argument("");
     }

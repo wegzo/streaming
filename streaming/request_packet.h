@@ -312,14 +312,14 @@ typename request_queue<T>::request_t* request_queue<T>::get(int packet_number)
     const int topology_index = this->get_topology_index(this->first_topology_number);
     assert_(topology_index >= 0);
 
-    if(topology_index < this->requests.size())
+    if(topology_index < (int)this->requests.size())
     {
         single_request_queue& queue = this->requests[topology_index];
 
         const int index = this->get_index(topology_index, packet_number);
         assert_(index >= 0);
 
-        if(index < queue.requests.size())
+        if(index < (int)queue.requests.size())
             return &queue.requests[index];
     }
 

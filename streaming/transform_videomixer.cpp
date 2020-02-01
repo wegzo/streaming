@@ -431,7 +431,7 @@ done:
     {
         device_context_resources_t frame =
             std::static_pointer_cast<transform_videomixer::device_context_resources>(
-                frames[i].buffer);
+                frames[(size_t)i].buffer);
         if(frame && frame->drawing)
         {
             frame->drawing = false;

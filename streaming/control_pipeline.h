@@ -247,7 +247,6 @@ public:
     // message is sent to the initiator window when the recording has been stopped;
     // might throw control_pipeline_recording_state_transition_exception
     void start_recording(const std::wstring& filename, ATL::CWindow initiator, bool streaming = false);
-    void start_streaming(const std::wstring& url, const std::wstring& key, ATL::CWindow initiator);
     void stop_recording();
 
     // releases all circular dependencies
