@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <iostream>
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 //DEFINE_GUID(media_sample_lifetime_tracker_guid,
 //    0xd84fe03a, 0xcb44, 0x43ec, 0x10, 0xac, 0x94, 0x00, 0xb, 0xcc, 0xef, 0x38);

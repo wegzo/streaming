@@ -2,7 +2,7 @@
 #include <Mferror.h>
 #include <iostream>
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 #undef min
 #undef max
 

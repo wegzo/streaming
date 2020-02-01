@@ -3,7 +3,7 @@
 #include <mmdeviceapi.h>
 #include <functiondiscoverykeys_devpkey.h>
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 control_wasapi::control_wasapi(control_set_t& active_controls, control_pipeline& pipeline) :
     control_class(active_controls, pipeline.event_provider),

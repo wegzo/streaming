@@ -17,7 +17,7 @@
 #define CREATE_DEVICE_DEBUG_D2D1 D2D1_DEBUG_LEVEL_NONE
 #endif
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 std::wstring control_output_config::create_file_path() const
 {

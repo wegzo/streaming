@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <limits>
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 struct transform_videomixer::device_context_resources : media_buffer_texture
 {

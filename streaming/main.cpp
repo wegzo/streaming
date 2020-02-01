@@ -11,7 +11,7 @@
 
 #define WINDOW_WIDTH 750
 #define WINDOW_HEIGHT 700
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 // defined in project settings
 //#define WORKER_STREAMS 3

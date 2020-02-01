@@ -10,7 +10,7 @@ EXTERN_GUID(CLSID_CResamplerMediaObject, 0xf447b69e, 0x1884, 0x4a7e, 0x80, 0x55,
 
 #define HALF_FILTER_LENGTH 30 /* 60 is max, but wmp and groove music uses 30 */
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 #undef max
 #undef min
 

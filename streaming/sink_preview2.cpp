@@ -5,7 +5,7 @@
 #include "gui_previewwnd.h"
 #include <Windows.h>
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 //void CHECK_HR(HRESULT hr)
 //{
 //    if(FAILED(hr))

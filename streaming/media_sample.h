@@ -378,7 +378,7 @@ typedef std::optional<media_component_aac_audio_args> media_component_aac_audio_
 /////////////////////////////////////////////////////////////////
 
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 template<typename T, typename U>
 typename media_sample_frames_template<T, U>::sample_t&

@@ -180,7 +180,7 @@ typename control_block_allocator<T, U>::pointer control_block_allocator<T, U>::a
 }
 
 template<class T, class U>
-void control_block_allocator<T, U>::deallocate(T* p, size_type /*n*/)
+void control_block_allocator<T, U>::deallocate([[maybe_unused]] T* p, size_type /*n*/)
 {
     // the shared pointer deallocates only the control block because it
     // has a custom deleter aswell
@@ -190,7 +190,7 @@ void control_block_allocator<T, U>::deallocate(T* p, size_type /*n*/)
 
     typename buffer_pool::scoped_lock lock(this->pool->mutex);
 
-    assert_(p == this->control_block_desc->control_block_ptr); p;
+    assert_(p == this->control_block_desc->control_block_ptr);
 
     if(this->pool->is_disposed())
         FREE_CONTROL_BLOCK(this->control_block_desc->control_block_ptr);
@@ -276,7 +276,7 @@ typename buffer_pooled<T>::buffer_t buffer_pooled<T>::create_pooled_buffer()
 template<class T>
 void buffer_pooled<T>::deleter(buffer_raw_t* buffer)
 {
-    assert_(buffer == this); buffer;
+    assert_(buffer == this);
 
     // locking the pool mutex before uninitializing can lock the whole pipeline for
     // unnecessarily long time

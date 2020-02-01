@@ -4,7 +4,7 @@
 #include <mfapi.h>
 #include <Mferror.h>
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 transform_color_converter::transform_color_converter(
     const media_session_t& session, context_mutex_t context_mutex) :

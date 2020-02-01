@@ -6,7 +6,7 @@
 
 #pragma comment(lib, "Shell32.lib")
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 void gui_configdlg::set_splitter(CStatic& wnd_static)
 {

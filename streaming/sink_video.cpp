@@ -9,7 +9,7 @@
 #undef max
 #undef min
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 #define AUDIO_BUNDLING_THRESHOLD (SECOND_IN_TIME_UNIT / 50) // 20ms
 
@@ -212,8 +212,8 @@ bool stream_video::get_clock(media_clock_t& clock)
 void stream_video::schedule_new(time_unit due_time)
 {
     media_clock_t t;
-    const bool ret = this->get_clock(t);
-    assert_(ret); ret;
+    [[maybe_unused]] const bool ret = this->get_clock(t);
+    assert_(ret);
 
     // update video due time
     if(due_time == this->video_next_due_time)

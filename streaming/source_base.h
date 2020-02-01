@@ -124,7 +124,7 @@ public:
 /////////////////////////////////////////////////////////////////
 
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 template<typename T>
 source_base<T>::source_base(const media_session_t& session) :

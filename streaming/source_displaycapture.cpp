@@ -6,7 +6,7 @@
 
 #pragma comment(lib, "D3D11.lib")
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 #ifdef _DEBUG
 #define CREATE_DEVICE_DEBUG D3D11_CREATE_DEVICE_DEBUG
 #else

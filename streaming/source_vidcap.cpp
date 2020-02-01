@@ -13,7 +13,7 @@
 #undef max
 #undef min
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 class source_vidcap::device_notification_listener : 
     public CWindowImpl<device_notification_listener, CWindow, CWinTraits<>>,

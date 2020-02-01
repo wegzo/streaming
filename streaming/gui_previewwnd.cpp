@@ -10,7 +10,7 @@
 
 #define SIZE_POINT_RADIUS 5.f
 #define DRAG_RADIUS_OFFSET 2.f
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 #undef max
 #undef min

@@ -4,7 +4,7 @@
 #undef min
 #undef max
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 sink_audio::sink_audio(const media_session_t& session) : media_sink(session)
 {

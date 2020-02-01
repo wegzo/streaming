@@ -13,7 +13,7 @@
 #undef max
 #undef min
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 // TODO: this->captured_audio doesn't need to be a pointer
 

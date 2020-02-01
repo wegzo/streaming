@@ -13,7 +13,7 @@
 //    if(FAILED(hr))
 //        throw HR_EXCEPTION(hr);
 //}
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 #undef max
 #undef min
 

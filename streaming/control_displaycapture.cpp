@@ -1,7 +1,7 @@
 #include "control_displaycapture.h"
 #include "control_pipeline.h"
 
-#define CHECK_HR(hr_) {if(FAILED(hr_)) {goto done;}}
+#define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
 control_displaycapture::control_displaycapture(control_set_t& active_controls, 
     control_pipeline& pipeline) :
