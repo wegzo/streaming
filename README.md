@@ -8,5 +8,6 @@ OBS Studio inspired software vision mixer.
 * Supports hardware and software based video encoding
 * Supports audio recording, USB video device recording and desktop recording
 * Outputs mp4 files
+* Streams using rtmp
 
 Key design points are efficiency, robustness, intuitiveness and advancedness.
