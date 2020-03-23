@@ -53,10 +53,12 @@ protected:
 
     // the root control must implement this
     virtual void build_and_switch_topology();
-    // source/scene control classes connect to videoprocessor stream only(or not)
+    // source/scene control classes connect to videoprocessor stream only(or not);
+    // 'from' can be nullptr
     virtual void build_video_topology(const media_stream_t& /*from*/,
         const media_stream_t& /*to*/, const media_topology_t&) 
     {assert_(false);}
+    // 'from' can be nullptr
     virtual void build_audio_topology(const media_stream_t& /*from*/,
         const media_stream_t& /*to*/, const media_topology_t&) 
     {assert_(false);}

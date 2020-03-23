@@ -9,6 +9,7 @@ media_stream::media_stream(stream_t stream_type) : locked(false), stream_type(st
 
 void media_stream::connect_streams(const media_stream_t& from, const media_topology_t& topology)
 {
+    from->topology = topology;
     this->topology = topology;
     topology->connect_streams(from, this->shared_from_this<media_stream>());
 }

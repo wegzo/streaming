@@ -34,8 +34,11 @@ void control_displaycapture::build_video_topology(const media_stream_t& from,
                 std::static_pointer_cast<stream_displaycapture>(displaycapture_stream));
 
         // connect from the 'from' stream to this stream
-        displaycapture_pointer_stream->connect_streams(from, topology);
-        displaycapture_stream->connect_streams(from, topology);
+        if(from)
+        {
+            displaycapture_pointer_stream->connect_streams(from, topology);
+            displaycapture_stream->connect_streams(from, topology);
+        }
 
         // connect from this stream to 'to' stream
         videomixer_stream->connect_streams(displaycapture_pointer_stream,

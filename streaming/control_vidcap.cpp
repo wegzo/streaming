@@ -34,7 +34,8 @@ void control_vidcap::build_video_topology(const media_stream_t& from,
             media_stream_t vidcap_stream =
                 this->component->create_stream(topology->get_message_generator());
 
-            vidcap_stream->connect_streams(from, topology);
+            if(from)
+                vidcap_stream->connect_streams(from, topology);
             videomixer_stream->connect_streams(vidcap_stream, this->videomixer_params, topology);
 
             this->stream = vidcap_stream;

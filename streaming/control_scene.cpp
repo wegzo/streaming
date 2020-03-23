@@ -49,7 +49,8 @@ void control_scene::build_video_topology(const media_stream_t& from,
         empty_source->initialize(this->pipeline.shared_from_this<control_pipeline>());
 
         media_stream_t empty_stream = empty_source->create_stream(topology->get_message_generator());
-        empty_stream->connect_streams(from, topology);
+        if(from)
+            empty_stream->connect_streams(from, topology);
         videomixer_stream->connect_streams(empty_stream, NULL, topology);
     }
 }
@@ -92,7 +93,8 @@ void control_scene::build_audio_topology(const media_stream_t& from,
         empty_source->initialize(this->pipeline.shared_from_this<control_pipeline>());
 
         media_stream_t empty_stream = empty_source->create_stream(topology->get_message_generator());
-        empty_stream->connect_streams(from, topology);
+        if(from)
+            empty_stream->connect_streams(from, topology);
         audiomixer_stream->connect_streams(empty_stream, NULL, topology);
     }
 }

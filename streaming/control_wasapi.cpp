@@ -30,7 +30,8 @@ void control_wasapi::build_audio_topology(const media_stream_t& from,
     {
         media_stream_t wasapi_stream = this->component->create_stream(topology->get_message_generator());
 
-        wasapi_stream->connect_streams(from, topology);
+        if(from)
+            wasapi_stream->connect_streams(from, topology);
         audiomixer_stream->connect_streams(wasapi_stream, this->audiomixer_params, topology);
 
         this->stream = wasapi_stream;

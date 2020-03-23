@@ -591,19 +591,14 @@ void control_pipeline::build_and_switch_topology()
         this->videomixer_transform->create_stream(this->video_topology->get_message_generator());
 
     // connect the sources to mixers
-    this->root_scene->build_video_topology(
-        video_stream, videomixer_stream, this->video_topology);
-    this->root_scene->build_audio_topology(
-        audio_stream, audiomixer_stream, this->audio_topology);
+    this->root_scene->build_video_topology(nullptr, videomixer_stream, this->video_topology);
+    this->root_scene->build_audio_topology(nullptr, audiomixer_stream, this->audio_topology);
 
     // connect the buffering sources to mixers
     media_stream_t video_buffering_stream = this->video_buffering_source->create_stream(
         this->video_topology->get_message_generator());
     media_stream_t audio_buffering_stream = this->audio_buffering_source->create_stream(
         this->audio_topology->get_message_generator());
-
-    video_buffering_stream->connect_streams(video_stream, this->video_topology);
-    audio_buffering_stream->connect_streams(audio_stream, this->audio_topology);
 
     videomixer_stream->connect_streams(video_buffering_stream, nullptr, this->video_topology);
     audiomixer_stream->connect_streams(audio_buffering_stream, nullptr, this->audio_topology);
