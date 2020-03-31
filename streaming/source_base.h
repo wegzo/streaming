@@ -15,10 +15,15 @@
 #undef min
 #undef max
 
+#define SRC_MINIMUM_TIMEOUT ((time_unit)SECOND_IN_TIME_UNIT)
+
 // source specialization base class for components;
 // the args type is wrapped into an optional type to enable null args
 
-// TODO: add timeout for sources so that a stalling source won't just cause uncontrolled buffering
+// TODO: source base should have its own stream_start and stream_end
+// callbacks that are called when the actual sample fetching starts;
+// existing stream_start&stop should be renamed something like
+// topology_activated & topology_stop_requested (maybe)
 
 template<class SourceBase>
 class stream_source_base;
@@ -98,6 +103,10 @@ private:
     std::shared_ptr<::request_dispatcher<void*>> serve_dispatcher;
     std::shared_ptr<request_dispatcher> dispatcher;
 
+    // timeout mechanism
+    time_unit last_sample_timestamp;
+    time_unit last_request_timestamp;
+
     // wrapper for source_base::get_samples_end, handles broken functionality
     bool get_samples_end(time_unit request_time, frame_unit& end) const;
     // wrapper for source_base::make_request, handles broken functionality
@@ -172,7 +181,9 @@ stream_source_base<T>::stream_source_base(const source_base_t& source) :
     source(source),
     drainable_or_drained(false),
     dispatcher(new request_dispatcher),
-    serve_dispatcher(new ::request_dispatcher<void*>)
+    serve_dispatcher(new ::request_dispatcher<void*>),
+    last_sample_timestamp(time_unit_invalid),
+    last_request_timestamp(time_unit_invalid)
 {
 }
 
@@ -259,15 +270,12 @@ bool stream_source_base<T>::on_serve(typename request_queue::request_t& request)
             active_topology = this->source->active_topology.front();
     }
 
-    // TODO: source_base should serve null if a request has been served with valid data
-    // up to request_time already;
-    // currently, such case would cause an assert failure;
-    // such case might happen on drain operation;
-    // ^ should be fixed
-
     // only serve the request with samples if the request originates from the active topology
     if(active_topology == request.rp.topology)
     {
+        if(this->last_sample_timestamp == time_unit_invalid)
+            this->last_sample_timestamp = request.rp.timestamp;
+
         frame_unit samples_end;
         const frame_unit request_end = convert_to_frame_unit(request.rp.request_time,
             this->source->session->frame_rate_num,
@@ -278,12 +286,33 @@ bool stream_source_base<T>::on_serve(typename request_queue::request_t& request)
 
         if(valid_end)
         {
+            this->last_sample_timestamp = request.rp.timestamp;
+
             const frame_unit end = std::min(request_end, samples_end);
             // make_request is allowed to set the args in request to null
             this->make_request(request, end);
         }
         else
+        {
             assert_(!request.sample.args);
+            assert_(this->last_sample_timestamp != time_unit_invalid);
+
+            this->last_request_timestamp = request.rp.timestamp;
+
+            // max time out is either 1 second or frame rate / 2 in seconds,
+            // whichever is longer
+            const time_unit max_timeout = std::max(
+                SRC_MINIMUM_TIMEOUT,
+                convert_to_time_unit((frame_unit)
+                    ((double)this->source->session->frame_rate_num / 
+                    this->source->session->frame_rate_den / 2.0),
+                    this->source->session->frame_rate_num,
+                    this->source->session->frame_rate_den));
+
+            assert_(this->last_request_timestamp >= this->last_sample_timestamp);
+            if((this->last_request_timestamp - this->last_sample_timestamp) >= max_timeout)
+                this->source->set_broken();
+        }
 
     }
     else

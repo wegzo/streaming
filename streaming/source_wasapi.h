@@ -10,6 +10,7 @@
 #pragma comment(lib, "Mfplat.lib")
 
 #define CAPTURE_BUFFER_DURATION (SECOND_IN_TIME_UNIT) // 1s buffer
+#define MAX_TS_DIFF ((time_unit)SECOND_IN_TIME_UNIT)
 
 struct IMMDevice;
 

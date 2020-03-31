@@ -2,6 +2,7 @@
 
 #include <exception>
 #include <string>
+#include <string_view>
 #include <cassert>
 #include <mutex>
 #include <atomic>
@@ -36,10 +37,13 @@ void report_error(std::ostream& stream, HRESULT, int line_number, const char* fi
 void check_for_errors();
 void print_error_and_abort(const char*);
 
+HRESULT write_dump_file(const std::wstring_view& file, LPEXCEPTION_POINTERS = nullptr);
+
 }
 
 #define HR_EXCEPTION(hr_) streaming::exception(hr_, __LINE__, BASE_FILE)
-#define PRINT_ERROR(hr_) { \
-    std::cout << "EXCEPTION THROWN: "; \
-    streaming::report_error(std::cout, hr_, __LINE__, BASE_FILE); \
+#define PRINT_ERROR_STREAM(hr_, stream_) { \
+    stream_ << "EXCEPTION THROWN: "; \
+    streaming::report_error(stream_, hr_, __LINE__, BASE_FILE); \
 }
+#define PRINT_ERROR(hr_) PRINT_ERROR_STREAM(hr_, std::cout)

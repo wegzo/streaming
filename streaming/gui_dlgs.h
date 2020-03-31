@@ -13,8 +13,10 @@ class gui_scenedlg final :
 private:
     int scene_counter;
     control_pipeline_t ctrl_pipeline;
-    CButton btn_addscene, btn_removescene;
-    CListBox wnd_scenelist;
+    CContainedWindowT<CTreeViewCtrlEx> wnd_scenetree;
+    CToolBarCtrl wnd_toolbar;
+    CFont font_toolbar;
+    bool selecting;
 
     // gui_event_handler
     void on_scene_activate(control_scene* activated_scene, bool deactivated) override;
@@ -27,25 +29,25 @@ public:
 
     // command handlers handle events from child windows
     BEGIN_MSG_MAP(gui_scenedlg)
-        COMMAND_HANDLER(IDC_ADDSCENE, BN_CLICKED, OnBnClickedAddscene)
-        COMMAND_HANDLER(IDC_REMOVESCENE, BN_CLICKED, OnBnClickedRemovescene)
+        COMMAND_HANDLER(ID_BUTTON_ADD_SRC, BN_CLICKED, OnBnClickedAddscene)
+        COMMAND_HANDLER(ID_BUTTON_REMOVE_SRC, BN_CLICKED, OnBnClickedRemovescene)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
-        COMMAND_HANDLER(IDC_SCENELIST, LBN_SELCHANGE, OnLbnSelchangeScenelist)
+        NOTIFY_HANDLER(IDC_SCENETREE, TVN_SELCHANGED, OnTvnSelchangedScenetree)
+        MSG_WM_SIZE(OnSceneDlgSize)
         CHAIN_MSG_MAP(CDialogResize<gui_scenedlg>)
+
+    // alt message map for scene tree view
+    ALT_MSG_MAP(1)
     END_MSG_MAP()
 
     BEGIN_DLGRESIZE_MAP(gui_scenedlg)
-        DLGRESIZE_CONTROL(IDC_SCENELIST, DLSZ_SIZE_X | DLSZ_SIZE_Y)
-        /*BEGIN_DLGRESIZE_GROUP()*/
-            DLGRESIZE_CONTROL(IDC_ADDSCENE, DLSZ_MOVE_X | DLSZ_MOVE_Y)
-            DLGRESIZE_CONTROL(IDC_REMOVESCENE, DLSZ_MOVE_X | DLSZ_MOVE_Y)
-        /*END_DLGRESIZE_GROUP()*/
     END_DLGRESIZE_MAP()
 
     LRESULT OnBnClickedAddscene(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedRemovescene(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-    LRESULT OnLbnSelchangeScenelist(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnTvnSelchangedScenetree(int /*idCtrl*/, LPNMHDR pNMHDR, BOOL& /*bHandled*/);
+    void OnSceneDlgSize(UINT nType, CSize size);
 };
 
 class gui_sourcedlg final :
@@ -57,9 +59,11 @@ private:
     int video_counter, audio_counter;
 
     control_pipeline_t ctrl_pipeline;
-    CButton btn_addsource, btn_removesource, btn_srcup, btn_srcdown;
-    CFont font_srcupdown;
-    CTreeViewCtrlEx wnd_sourcetree;
+
+    CContainedWindowT<CTreeViewCtrlEx> wnd_sourcetree;
+    CToolBarCtrl wnd_toolbar;
+    CFont font_toolbar;
+
     bool do_not_reselect;
     control_scene* current_active_scene;
     bool update_source_list_on_scene_activate;
@@ -80,26 +84,23 @@ public:
     ~gui_sourcedlg();
 
     BEGIN_MSG_MAP(gui_sourcedlg)
-        COMMAND_HANDLER(IDC_ADDSRC, BN_CLICKED, OnBnClickedAddsrc)
-        COMMAND_HANDLER(IDC_REMOVESRC, BN_CLICKED, OnBnClickedRemovesrc)
+        COMMAND_HANDLER(ID_BUTTON_ADD_SRC, BN_CLICKED, OnBnClickedAddsrc)
+        COMMAND_HANDLER(ID_BUTTON_REMOVE_SRC, BN_CLICKED, OnBnClickedRemovesrc)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
-        CHAIN_MSG_MAP(CDialogResize<gui_sourcedlg>)
+        MSG_WM_SIZE(OnSourceDlgSize)
         NOTIFY_HANDLER(IDC_SOURCETREE, TVN_SELCHANGED, OnTvnSelchangedSourcetree)
         NOTIFY_HANDLER(IDC_SOURCETREE, NM_KILLFOCUS, OnKillFocus)
         NOTIFY_HANDLER(IDC_SOURCETREE, NM_SETFOCUS, OnSetFocus)
-        COMMAND_HANDLER(IDC_SRCUP, BN_CLICKED, OnBnClickedSrcup)
-        COMMAND_HANDLER(IDC_SRCDOWN, BN_CLICKED, OnBnClickedSrcdown)
+        COMMAND_HANDLER(ID_BUTTON_MOVE_UP_SRC, BN_CLICKED, OnBnClickedSrcup)
+        COMMAND_HANDLER(ID_BUTTON_MOVE_DOWN_SRC, BN_CLICKED, OnBnClickedSrcdown)
+        CHAIN_MSG_MAP(CDialogResize<gui_sourcedlg>)
+
+    // alt message map for source tree view
+    ALT_MSG_MAP(1)
+        NOTIFY_HANDLER(ID_SOURCE_TOOLBAR, NM_CUSTOMDRAW, OnSourceToolbarCustomDraw)
     END_MSG_MAP()
 
     BEGIN_DLGRESIZE_MAP(gui_sourcedlg)
-        DLGRESIZE_CONTROL(IDC_SOURCETREE, DLSZ_SIZE_X | DLSZ_SIZE_Y)
-        /*BEGIN_DLGRESIZE_GROUP()*/
-            DLGRESIZE_CONTROL(IDC_ADDSRC, DLSZ_MOVE_X | DLSZ_MOVE_Y)
-            DLGRESIZE_CONTROL(IDC_REMOVESRC, DLSZ_MOVE_X | DLSZ_MOVE_Y)
-        /*END_DLGRESIZE_GROUP()*/
-
-        DLGRESIZE_CONTROL(IDC_SRCUP, DLSZ_MOVE_X /*| DLSZ_MOVE_Y*/)
-        DLGRESIZE_CONTROL(IDC_SRCDOWN, DLSZ_MOVE_X /*| DLSZ_MOVE_Y*/)
     END_DLGRESIZE_MAP()
 
     LRESULT OnBnClickedAddsrc(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -110,6 +111,8 @@ public:
     LRESULT OnSetFocus(int /*idCtrl*/, LPNMHDR pNMHDR, BOOL& /*bHandled*/);
     LRESULT OnBnClickedSrcup(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedSrcdown(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnSourceToolbarCustomDraw(int /*wParam*/, LPNMHDR /*lParam*/, BOOL& /*bHandled*/);
+    void OnSourceDlgSize(UINT /*nType*/, CSize /*size*/);
 };
 
 class gui_controldlg :

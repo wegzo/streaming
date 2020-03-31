@@ -49,6 +49,8 @@ typedef int64_t time_unit;
 // relative to the time source
 typedef int64_t frame_unit;
 
+constexpr time_unit time_unit_invalid = std::numeric_limits<time_unit>::min();
+
 frame_unit convert_to_frame_unit(time_unit, frame_unit frame_rate_num, frame_unit frame_rate_den);
 time_unit convert_to_time_unit(frame_unit, frame_unit frame_rate_num, frame_unit frame_rate_den);
 

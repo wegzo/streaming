@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <mfapi.h>
 #include <d3d11.h>
+#include <TlHelp32.h>
 #include "gui_mainwnd.h"
 #include <mutex>
 
@@ -78,12 +79,75 @@ int YourReportHook( int reportType, char *message, int *returnValue )
 
 #endif
 
+void terminate_handler_f(LPEXCEPTION_POINTERS excp_pointers)
+{
+    static std::mutex terminate_handler_mutex;
+    std::lock_guard<std::mutex> lock(terminate_handler_mutex);
+
+    std::thread([excp_pointers]()
+        {
+            {
+                CHandle handle(CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0));
+                if(handle)
+                {
+                    // suspend all other running threads
+                    THREADENTRY32 te;
+                    te.dwSize = sizeof(te);
+                    if(Thread32First(handle, &te))
+                    {
+                        do
+                        {
+                            if(te.dwSize >= (FIELD_OFFSET(THREADENTRY32, th32OwnerProcessID) +
+                                sizeof(te.th32OwnerProcessID)) && 
+                                te.th32ThreadID != GetCurrentThreadId() &&
+                                te.th32OwnerProcessID == GetCurrentProcessId())
+                            {
+                                CHandle thread_handle(OpenThread(
+                                    THREAD_ALL_ACCESS, FALSE, te.th32ThreadID));
+                                SuspendThread(thread_handle);
+                            }
+                            te.dwSize = sizeof(te);
+                        } while(Thread32Next(handle, &te));
+                    }
+
+                    if(MessageBox(nullptr, 
+                        L"streaming.exe crashed. Do you want create a dump file?", nullptr,
+                        MB_ICONERROR | MB_YESNO) == IDYES)
+                    {
+                        gui_mainwnd::show_dump_file_dialog(excp_pointers);
+                    }
+                }
+            }
+
+            abort();
+        }).join();
+}
+
+void terminate_handler_f()
+{
+    terminate_handler_f(nullptr);
+}
+
+LONG WINAPI unhandled_exception_handler(LPEXCEPTION_POINTERS excp_pointers)
+{
+    terminate_handler_f(excp_pointers);
+#ifdef _DEBUG
+    return EXCEPTION_CONTINUE_SEARCH;
+#else
+    return EXCEPTION_EXECUTE_HANDLER;
+#endif
+}
+
+
 //DWORD capture_work_queue_id;
 // greater priority value has a greater priority
 //LONG capture_audio_priority = 10;
 
 int main()
 {
+    std::set_terminate(terminate_handler_f);
+    SetUnhandledExceptionFilter(unhandled_exception_handler);
+
     try
     {
         HRESULT hr = S_OK;

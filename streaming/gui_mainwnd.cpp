@@ -2,10 +2,123 @@
 #include "gui_settingsdlg.h"
 #include "gui_configdlgs.h"
 #include "control_preview.h"
+#include <sstream>
+#include <thread>
 
 extern CAppModule module_;
 
 #undef max
+
+#define FILE_DUMP_CANCELLED_HRESULT MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 1)
+#define GUI_DUMPFILEDLG_MESSAGE (WM_APP + 1)
+
+class gui_dumpfiledlg final :
+    public CDialogImpl<gui_dumpfiledlg>,
+    public enable_shared_from_this
+{
+private:
+    LPEXCEPTION_POINTERS excp_pointers;
+    control_pipeline* ctrl_pipeline;
+    bool dump_file;
+    std::wstring file;
+    CEdit wnd_text;
+    CButton wnd_ok;
+public:
+    enum { IDD = IDD_DIALOG_DUMP_FILE_DLG };
+
+    gui_dumpfiledlg(
+        LPEXCEPTION_POINTERS,
+        control_pipeline*,
+        bool dump_file, std::wstring file);
+
+    BEGIN_MSG_MAP(gui_dumpfiledlg)
+        MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+        COMMAND_HANDLER(IDOK, BN_CLICKED, OnBnClickedOk)
+        MESSAGE_HANDLER(GUI_DUMPFILEDLG_MESSAGE, OnFileDumpResult)
+    END_MSG_MAP()
+
+    LRESULT OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+    LRESULT OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnFileDumpResult(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+};
+
+using gui_dumpfiledlg_t = std::shared_ptr<gui_dumpfiledlg>;
+
+gui_dumpfiledlg::gui_dumpfiledlg(
+    LPEXCEPTION_POINTERS excp_pointers,
+    control_pipeline* ctrl_pipeline,
+    bool dump_file, std::wstring file) :
+    excp_pointers(excp_pointers),
+    ctrl_pipeline(ctrl_pipeline),
+    dump_file(dump_file),
+    file(std::move(file))
+{
+}
+
+LRESULT gui_dumpfiledlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+    this->wnd_ok.Attach(this->GetDlgItem(IDOK));
+    this->wnd_text.Attach(this->GetDlgItem(IDC_EDIT1));
+
+    std::wstring text;
+    if(this->dump_file)
+    {
+        text = L"Writing dump file ";
+        text += this->file;
+        text += L"...";
+
+        this->wnd_ok.ShowWindow(SW_HIDE);
+        /*this->wnd_ok.SetWindowTextW(L"Cancel");*/
+
+        // start the dump process
+        std::weak_ptr<gui_dumpfiledlg> that_weak = this->shared_from_this<gui_dumpfiledlg>();
+        std::thread(
+            [that_weak](
+                PEXCEPTION_POINTERS excp_pointers, 
+                control_pipeline* ctrl_pipeline, 
+                std::wstring file)
+            {
+                std::cout << "ctrl pipeline: " << ctrl_pipeline << std::endl;
+
+                const HRESULT hr = streaming::write_dump_file(file, excp_pointers);
+                auto that = that_weak.lock();
+                if(that)
+                    that->SendMessageW(GUI_DUMPFILEDLG_MESSAGE, hr);
+
+            }, this->excp_pointers, this->ctrl_pipeline, this->file).detach();
+    }
+    else
+    {
+        text = L"Dump file created: ";
+        text += this->file;
+        text += L".";
+
+        this->wnd_ok.SetWindowTextW(L"OK");
+    }
+
+    this->wnd_text.SetWindowTextW(text.c_str());
+
+    return 0;
+}
+
+LRESULT gui_dumpfiledlg::OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    if(!this->dump_file)
+        this->EndDialog(FILE_DUMP_CANCELLED_HRESULT);
+    return 0;
+}
+
+LRESULT gui_dumpfiledlg::OnFileDumpResult(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+    this->EndDialog((HRESULT)wParam);
+    return 0;
+}
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+
 
 gui_controlwnd::gui_controlwnd(const control_pipeline_t& ctrl_pipeline) :
     ctrl_pipeline(ctrl_pipeline),
@@ -25,6 +138,8 @@ int gui_controlwnd::OnCreate(LPCREATESTRUCT)
 {
     CMessageLoop* loop = module_.GetMessageLoop();
     loop->AddMessageFilter(this);
+
+    SetClassLongPtr(*this, GCLP_HBRBACKGROUND, (LONG_PTR)GetSysColorBrush(COLOR_3DFACE));
 
     this->dlg_scenes.Create(*this);
     this->dlg_sources.Create(*this);
@@ -52,16 +167,17 @@ void gui_controlwnd::OnSize(UINT /*nType*/, CSize size)
     }
 
     RECT rc = {0};
-    rc.bottom = size.cy;
 
+    rc.left = 5;
+    rc.bottom = size.cy;
     rc.right = (size.cx - 110) / 2;
     this->dlg_scenes.SetWindowPos(NULL, &rc, SWP_NOACTIVATE | SWP_NOZORDER);
 
-    rc.left = rc.right;
+    rc.left = rc.right + 5;
     rc.right += rc.right;
     this->dlg_sources.SetWindowPos(NULL, &rc, SWP_NOACTIVATE | SWP_NOZORDER);
 
-    rc.left = rc.right;
+    rc.left = rc.right + 5;
     rc.right = size.cx;
     this->dlg_controls.SetWindowPos(NULL, &rc, SWP_NOACTIVATE | SWP_NOZORDER);
 }
@@ -132,6 +248,38 @@ void gui_mainwnd::on_activate(control_class* activated_control, bool deactivated
     }
 }
 
+void gui_mainwnd::show_dump_file_dialog(
+    LPEXCEPTION_POINTERS excp_pointers,
+    control_pipeline* ctrl_pipeline, 
+    HWND parent)
+{
+    const std::wstring dump_filename = L"streaming.DMP";
+
+    gui_dumpfiledlg_t dumpfiledlg(
+        new gui_dumpfiledlg(excp_pointers, ctrl_pipeline, true, dump_filename));
+    const INT_PTR ret = dumpfiledlg->DoModal(parent);
+    if(ret == S_OK)
+    {
+        gui_dumpfiledlg_t resultfiledlg(
+            new gui_dumpfiledlg(excp_pointers, ctrl_pipeline, false, dump_filename));
+        resultfiledlg->DoModal(parent);
+    }
+    else if(ret == FILE_DUMP_CANCELLED_HRESULT)
+    {
+        // do nothing
+    }
+    else
+    {
+        std::stringstream sts;
+        PRINT_ERROR_STREAM((HRESULT)ret, sts);
+
+        std::string message = "Error occured during dump write: ";
+        message += sts.str();
+
+        MessageBoxA(parent, message.c_str(), nullptr, MB_ICONERROR);
+    }
+}
+
 BOOL gui_mainwnd::PreTranslateMessage(MSG* pMsg)
 {
     // this will intentionally freeze the gui if there are errors originating from the pipeline
@@ -150,7 +298,7 @@ int gui_mainwnd::OnCreate(LPCREATESTRUCT /*createstruct*/)
     CMessageLoop* loop = module_.GetMessageLoop();
     loop->AddMessageFilter(this);
     loop->AddIdleHandler(this);
-    
+
     // create windows and control_pipeline
     this->ctrl_pipeline.reset(new control_pipeline);
     this->ctrl_pipeline->event_provider.register_event_handler(*this);
@@ -408,5 +556,11 @@ LRESULT gui_mainwnd::OnSettings(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndC
 LRESULT gui_mainwnd::OnExit(WORD, WORD, HWND, BOOL&)
 {
     PostQuitMessage(0);
+    return 0;
+}
+
+LRESULT gui_mainwnd::OnCreateDumpFile(WORD, WORD, HWND, BOOL&)
+{
+    show_dump_file_dialog(nullptr, this->ctrl_pipeline.get(), *this);
     return 0;
 }

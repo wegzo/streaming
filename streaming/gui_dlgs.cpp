@@ -8,7 +8,9 @@
 
 gui_scenedlg::gui_scenedlg(const control_pipeline_t& ctrl_pipeline) :
     ctrl_pipeline(ctrl_pipeline),
-    scene_counter(0)
+    scene_counter(0),
+    selecting(false),
+    wnd_scenetree(this, 1)
 {
     this->ctrl_pipeline->event_provider.register_event_handler(*this);
 }
@@ -21,26 +23,32 @@ gui_scenedlg::~gui_scenedlg()
 void gui_scenedlg::on_scene_activate(control_scene* activated_scene, bool deactivated)
 {
     // find the scene on the wnd_scenelist
-    const int listbox_count = this->wnd_scenelist.GetCount();
-    int i;
-    for(i = 0; i < listbox_count && !deactivated; i++)
+    CTreeItem item;
+    for(item = this->wnd_scenetree.GetRootItem();
+        item && !deactivated;
+        item = item.GetNextSibling())
     {
         CString text;
-        const int len = this->wnd_scenelist.GetText(i, text);
-        if(len && activated_scene->name.compare(text) == 0)
+        item.GetText(text);
+        if(!text.IsEmpty() && activated_scene->name.compare(text) == 0)
             break;
     }
 
-    const bool found = (i < listbox_count);
-    if(found && !deactivated)
-        this->wnd_scenelist.SetCurSel(i);
+    if(item && !deactivated)
+    {
+        if(!this->selecting)
+            this->wnd_scenetree.SelectItem(item);
+    }
 }
 
 void gui_scenedlg::on_control_added(control_class* new_control, bool removed, control_scene* /*scene*/)
 {
     control_scene* new_scene = dynamic_cast<control_scene*>(new_control);
     if(!removed && new_scene)
-        const int index = this->wnd_scenelist.AddString(new_scene->name.c_str());
+    {
+        CTreeItem new_item = this->wnd_scenetree.InsertItem(
+            new_scene->name.c_str(), nullptr, this->wnd_scenetree.GetLastVisibleItem());
+    }
 }
 
 LRESULT gui_scenedlg::OnBnClickedAddscene(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -65,17 +73,20 @@ LRESULT gui_scenedlg::OnBnClickedAddscene(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 
 LRESULT gui_scenedlg::OnBnClickedRemovescene(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    const int index = this->wnd_scenelist.GetCurSel();
-    if(index != LB_ERR)
+    CTreeItem item = this->wnd_scenetree.GetSelectedItem();
+    if(item)
     {
-        const int next_index = (index == 0) ? index + 1 : index - 1;
-        const int size = this->wnd_scenelist.GetCount();
+        const int size = (int)this->wnd_scenetree.GetCount();
         if(size > 1)
         {
+            CTreeItem next_item = item.GetNextSibling();
+            if(!next_item)
+                next_item = item.GetPrevSibling();
+
             CString name, old_name;
-            this->wnd_scenelist.SetCurSel(next_index);
-            this->wnd_scenelist.GetText(next_index, name);
-            this->wnd_scenelist.GetText(index, old_name);
+            this->wnd_scenetree.SelectItem(next_item);
+            next_item.GetText(name);
+            item.GetText(old_name);
 
             bool is_video_control, found;
             bool is_video_control2, found2;
@@ -98,12 +109,12 @@ LRESULT gui_scenedlg::OnBnClickedRemovescene(WORD /*wNotifyCode*/, WORD /*wID*/,
                 this->ctrl_pipeline->root_scene->switch_scene(*scene);
             }
 
-            this->wnd_scenelist.DeleteString(index);
+            this->wnd_scenetree.DeleteItem(item);
         }
         else if(size == 1)
         {
             CString old_name;
-            this->wnd_scenelist.GetText(index, old_name);
+            item.GetText(old_name);
 
             bool is_video_control2, found2;
             auto old_it = this->ctrl_pipeline->root_scene->find_control_iterator(
@@ -123,8 +134,7 @@ LRESULT gui_scenedlg::OnBnClickedRemovescene(WORD /*wNotifyCode*/, WORD /*wID*/,
                 this->ctrl_pipeline->deactivate();
             }
 
-            this->wnd_scenelist.SetCurSel(-1);
-            this->wnd_scenelist.DeleteString(index);
+            this->wnd_scenetree.DeleteItem(item);
         }
     }
 
@@ -135,19 +145,54 @@ LRESULT gui_scenedlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lP
 {
     this->DlgResize_Init(false);
 
-    // the parent-child window pair for idc_addscene is defined in the resource file
-    this->btn_addscene.Attach(this->GetDlgItem(IDC_ADDSCENE));
-    this->btn_removescene.Attach(this->GetDlgItem(IDC_REMOVESCENE));
-    this->wnd_scenelist.Attach(this->GetDlgItem(IDC_SCENELIST));
+    this->font_toolbar = ::CreateFont(0, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE,
+        DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+        VARIABLE_PITCH, L"Segoe MDL2 Assets");
+
+    this->wnd_scenetree.SubclassWindow(this->GetDlgItem(IDC_SCENETREE));
+
+    CRect rc = {POINT{0, 0}, POINT{0, 0}};
+    this->wnd_toolbar.Create(*this, rc, nullptr,
+        CCS_NODIVIDER | CCS_BOTTOM | WS_CHILD | TBSTYLE_TOOLTIPS | TBSTYLE_LIST, 0,
+        ID_SOURCE_TOOLBAR);
+    this->wnd_toolbar.SetFont(this->font_toolbar);
+    this->wnd_toolbar.SetDrawTextFlags((DWORD)~0, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    this->wnd_toolbar.SetExtendedStyle(TBSTYLE_EX_MIXEDBUTTONS /*| TBSTYLE_EX_DOUBLEBUFFER*/);
+    this->wnd_toolbar.SetButtonStructSize();
+
+    TBMETRICS metrics = {0};
+    metrics.cbSize = sizeof(TBMETRICS);
+    metrics.dwMask = TBMF_PAD | TBMF_BARPAD | TBMF_BUTTONSPACING;
+    this->wnd_toolbar.GetMetrics(&metrics);
+
+    metrics.cxPad = 0;
+    metrics.cyPad = 13;
+    metrics.cxButtonSpacing = 0;
+    this->wnd_toolbar.SetMetrics(&metrics);
+
+    this->wnd_toolbar.AddButton(
+        ID_BUTTON_ADD_SRC, BTNS_BUTTON | BTNS_SHOWTEXT | BTNS_AUTOSIZE,
+        TBSTATE_ENABLED, I_IMAGENONE, L" \uE109 ", NULL);
+    this->wnd_toolbar.AddButton(
+        ID_BUTTON_REMOVE_SRC, BTNS_BUTTON | BTNS_SHOWTEXT | BTNS_AUTOSIZE,
+        TBSTATE_ENABLED, I_IMAGENONE, L" \uE108 ", NULL);
+
+    this->wnd_toolbar.AutoSize();
+    this->wnd_toolbar.ShowWindow(SW_SHOW);
 
     return TRUE;
 }
 
-LRESULT gui_scenedlg::OnLbnSelchangeScenelist(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+LRESULT gui_scenedlg::OnTvnSelchangedScenetree(int /*idCtrl*/, LPNMHDR /*pNMHDR*/, BOOL& /*bHandled*/)
 {
-    const int index = this->wnd_scenelist.GetCurSel();
+    CTreeItem selected_item = this->wnd_scenetree.GetSelectedItem();
+    if(!selected_item)
+        return 0;
+
+    this->selecting = true;
+
     CString name;
-    this->wnd_scenelist.GetText(index, name);
+    selected_item.GetText(name);
 
     bool is_video_control, found;
     auto it = this->ctrl_pipeline->root_scene->find_control_iterator(
@@ -159,7 +204,29 @@ LRESULT gui_scenedlg::OnLbnSelchangeScenelist(WORD /*wNotifyCode*/, WORD /*wID*/
     // set focus to the source dialog
     /*this->dlg_sources.SetFocus();*/
 
+    this->selecting = false;
+
     return 0;
+}
+
+void gui_scenedlg::OnSceneDlgSize(UINT /*nType*/, CSize /*size*/)
+{
+    this->wnd_toolbar.AutoSize();
+
+    RECT toolbar_rc, scenetree_client_rc, this_client_rc;
+    this->GetClientRect(&this_client_rc);
+    this->wnd_toolbar.GetWindowRect(&toolbar_rc);
+
+    const LONG wnd_toolbar_width = toolbar_rc.right - toolbar_rc.left,
+        wnd_toolbar_height = toolbar_rc.bottom - toolbar_rc.top;
+
+    scenetree_client_rc.left = this_client_rc.left;
+    scenetree_client_rc.top = this_client_rc.top + 23;
+    scenetree_client_rc.right = this_client_rc.right;
+    scenetree_client_rc.bottom = this_client_rc.bottom - wnd_toolbar_height;
+    this->wnd_scenetree.SetWindowPos(HWND_BOTTOM, &scenetree_client_rc, SWP_NOACTIVATE);
+
+    this->SetMsgHandled(FALSE);
 }
 
 
@@ -173,7 +240,8 @@ gui_sourcedlg::gui_sourcedlg(const control_pipeline_t& ctrl_pipeline) :
     video_counter(0), audio_counter(0),
     do_not_reselect(false),
     current_active_scene(nullptr),
-    update_source_list_on_scene_activate(false)
+    update_source_list_on_scene_activate(false),
+    wnd_sourcetree(this, 1)
 {
     this->ctrl_pipeline->event_provider.register_event_handler(*this);
 }
@@ -393,21 +461,51 @@ LRESULT gui_sourcedlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 {
     this->DlgResize_Init(false);
 
-    this->btn_addsource.Attach(this->GetDlgItem(IDC_ADDSRC));
-    this->btn_removesource.Attach(this->GetDlgItem(IDC_REMOVESRC));
-    this->wnd_sourcetree.Attach(this->GetDlgItem(IDC_SOURCETREE));
-    this->btn_srcup.Attach(this->GetDlgItem(IDC_SRCUP));
-    this->btn_srcdown.Attach(this->GetDlgItem(IDC_SRCDOWN));
-
-    this->font_srcupdown = ::CreateFont(0, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE,
+    this->font_toolbar = ::CreateFont(0, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
-        VARIABLE_PITCH, L"Webdings");
+        VARIABLE_PITCH, L"Segoe MDL2 Assets");
 
-    this->btn_srcup.SetFont(this->font_srcupdown);
-    this->btn_srcdown.SetFont(this->font_srcupdown);
+    this->wnd_sourcetree.SubclassWindow(this->GetDlgItem(IDC_SOURCETREE));
 
-    this->btn_srcup.SetWindowTextW(L"\x35");
-    this->btn_srcdown.SetWindowTextW(L"\x36");
+    CRect rc = {POINT{0, 0}, POINT{0, 0}};
+    this->wnd_toolbar.Create(*this, rc, nullptr,
+        CCS_NODIVIDER | CCS_BOTTOM | WS_CHILD | TBSTYLE_TOOLTIPS | TBSTYLE_LIST, 0,
+        ID_SOURCE_TOOLBAR);
+    this->wnd_toolbar.SetFont(this->font_toolbar);
+    this->wnd_toolbar.SetDrawTextFlags((DWORD)~0, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    this->wnd_toolbar.SetExtendedStyle(TBSTYLE_EX_MIXEDBUTTONS /*| TBSTYLE_EX_DOUBLEBUFFER*/);
+    this->wnd_toolbar.SetButtonStructSize();
+
+    TBMETRICS metrics = {0};
+    metrics.cbSize = sizeof(TBMETRICS);
+    metrics.dwMask = TBMF_PAD | TBMF_BARPAD | TBMF_BUTTONSPACING;
+    this->wnd_toolbar.GetMetrics(&metrics);
+
+    metrics.cxPad = 0;
+    metrics.cyPad = 13;
+    metrics.cxButtonSpacing = 0;
+    this->wnd_toolbar.SetMetrics(&metrics);
+
+    this->wnd_toolbar.AddButton(
+        ID_BUTTON_ADD_SRC, BTNS_BUTTON | BTNS_SHOWTEXT | BTNS_AUTOSIZE, 
+        TBSTATE_ENABLED, I_IMAGENONE, L" \uE109 ", NULL);
+    this->wnd_toolbar.AddButton(
+        ID_BUTTON_REMOVE_SRC, BTNS_BUTTON | BTNS_SHOWTEXT | BTNS_AUTOSIZE, 
+        TBSTATE_ENABLED, I_IMAGENONE, L" \uE108 ", NULL);
+    this->wnd_toolbar.AddButton(0, BTNS_SEP, 0, 10, nullptr, 0);
+    this->wnd_toolbar.AddButton(
+        ID_BUTTON_MOVE_UP_SRC, BTNS_BUTTON | BTNS_SHOWTEXT | BTNS_AUTOSIZE, 
+        TBSTATE_ENABLED, I_IMAGENONE, L" \uE018 ", 0);
+    this->wnd_toolbar.AddButton(
+        ID_BUTTON_MOVE_DOWN_SRC, BTNS_BUTTON | BTNS_SHOWTEXT | BTNS_AUTOSIZE, 
+        TBSTATE_ENABLED, I_IMAGENONE, L" \uE019 ", 0);
+    this->wnd_toolbar.AddButton(0, BTNS_SEP, 0, 10, nullptr, 0);
+    this->wnd_toolbar.AddButton(
+        ID_BUTTON_CONFIGURE_SRC, BTNS_BUTTON | BTNS_SHOWTEXT | BTNS_AUTOSIZE, 
+        TBSTATE_INDETERMINATE, I_IMAGENONE, L" \uE115 ", 0);
+
+    this->wnd_toolbar.AutoSize();
+    this->wnd_toolbar.ShowWindow(SW_SHOW);
 
     return TRUE;
 }
@@ -519,6 +617,31 @@ LRESULT gui_sourcedlg::OnBnClickedSrcdown(WORD /*wNotifyCode*/, WORD /*wID*/, HW
     }
 
     return 0;
+}
+
+LRESULT gui_sourcedlg::OnSourceToolbarCustomDraw(int /*wParam*/, LPNMHDR /*lParam*/, BOOL& /*bHandled*/)
+{
+    return CDRF_DODEFAULT;
+}
+
+void gui_sourcedlg::OnSourceDlgSize(UINT /*nType*/, CSize /*size*/)
+{
+    this->wnd_toolbar.AutoSize();
+
+    RECT toolbar_rc, sourcetree_client_rc, this_client_rc;
+    this->GetClientRect(&this_client_rc);
+    this->wnd_toolbar.GetWindowRect(&toolbar_rc);
+
+    const LONG wnd_toolbar_width = toolbar_rc.right - toolbar_rc.left,
+        wnd_toolbar_height = toolbar_rc.bottom - toolbar_rc.top;
+    
+    sourcetree_client_rc.left = this_client_rc.left;
+    sourcetree_client_rc.top = this_client_rc.top + 23;
+    sourcetree_client_rc.right = this_client_rc.right;
+    sourcetree_client_rc.bottom = this_client_rc.bottom - wnd_toolbar_height;
+    this->wnd_sourcetree.SetWindowPos(HWND_BOTTOM, &sourcetree_client_rc, SWP_NOACTIVATE);
+
+    this->SetMsgHandled(FALSE);
 }
 
 
@@ -655,7 +778,6 @@ LRESULT gui_controldlg::OnBnClickedStartStreaming(WORD /*wNotifyCode*/, WORD /*w
     this->start_recording(true);
     return 0;
 }
-
 
 BOOL gui_controldlg::OnIdle()
 {

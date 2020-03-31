@@ -68,11 +68,8 @@ source_wasapi::stream_source_base_t source_wasapi::create_derived_stream()
 bool source_wasapi::get_samples_end(time_unit /*request_time*/, frame_unit& end) const
 {
     scoped_lock lock(this->captured_audio_mutex);
-    if(!this->captured_audio->is_valid())
+    if(!this->captured_audio->is_valid() || this->captured_audio->get_frames().empty())
         return false;
-
-    // TODO: if source wasapi becomes broken, get_samples_end should always return true
-    // and have samples up to request_time
 
     end = this->captured_audio->get_end();
     return true;
@@ -201,12 +198,22 @@ void source_wasapi::capture_cb(void*)
                 goto done;
             }
 
-            /*if(!this->capture)
-                first_sample_timestamp += SECOND_IN_TIME_UNIT / 2;*/
+            time_unit first_sample_timestamp_time_unit =
+                clock->system_time_to_clock_time((LONGLONG)first_sample_timestamp);
+            const time_unit cur_time = clock->get_current_time();
+
+            // just ignore device time if it's drifting more than 1 second
+            // TODO: make this same adjustment in source vidcap
+            if(std::abs(cur_time - first_sample_timestamp_time_unit) > MAX_TS_DIFF)
+            {
+                std::cout << "source_wasapi timestamps drifting more than 1 second, "
+                    "ignoring device time" << std::endl;
+                first_sample_timestamp_time_unit = cur_time;
+            }
 
             // calculate the new sample base from the timestamp
             this->native_frame_base = convert_to_frame_unit(
-                clock->system_time_to_clock_time((LONGLONG)first_sample_timestamp),
+                first_sample_timestamp_time_unit,
                 this->samples_per_second, 1);
 
             // set new base

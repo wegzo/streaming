@@ -8,6 +8,7 @@
 #include "control_pipeline.h"
 #include <atlsplit.h>
 #include <memory>
+#include <string>
 
 #define GUI_MAINWND_SHOW_MESSAGE WM_APP
 
@@ -73,6 +74,11 @@ public:
 
     gui_mainwnd();
 
+    static void show_dump_file_dialog(
+        LPEXCEPTION_POINTERS = nullptr,
+        control_pipeline* ctrl_pipeline = nullptr,
+        HWND parent = nullptr);
+
     BOOL PreTranslateMessage(MSG* pMsg);
     BOOL OnIdle();
     BEGIN_MSG_MAP(gui_mainwnd)
@@ -86,6 +92,7 @@ public:
         COMMAND_ID_HANDLER(ID_DEBUG, OnDebug)
         COMMAND_ID_HANDLER(ID_FILE_SETTINGS, OnSettings)
         COMMAND_ID_HANDLER(ID_FILE_EXIT, OnExit)
+        COMMAND_ID_HANDLER(ID_DEBUG_CREATE_DUMP_FILE, OnCreateDumpFile)
 
         CHAIN_MSG_MAP(CFrameWindowImpl<gui_mainwnd>)
 
@@ -107,4 +114,5 @@ public:
     LRESULT OnDebug(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnSettings(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnCreateDumpFile(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };

@@ -4,7 +4,13 @@
 //
 #define IDD_FORMVIEW                    101
 #define IDR_MAINFRAME                   101
+#define ID_SOURCE_TOOLBAR               101
 #define IDD_DIALOG_NEW                  102
+#define ID_BUTTON_REMOVE_SRC            103
+#define ID_BUTTON_MOVE_UP_SRC           104
+#define ID_BUTTON_MOVE_DOWN_SRC         105
+#define ID_BUTTON_CONFIGURE_SRC         106
+#define ID_BUTTON_ADD_SRC               107
 #define IDD_SOURCEDLG                   108
 #define IDD_SCENEDLG                    110
 #define IDD_CTRLDLG                     112
@@ -14,6 +20,7 @@
 #define IDD_VIDEO_CONFIG                127
 #define IDD_AUDIO_CONFIG                128
 #define IDD_OUTPUT_CONFIG               129
+#define IDD_DIALOG_DUMP_FILE_DLG        139
 #define IDC_BUTTON1                     1005
 #define IDC_START_RECORDING             1005
 #define IDC_REMOVESRC                   1006
@@ -23,6 +30,7 @@
 #define IDC_EDIT_NEW                    1018
 #define IDC_SOURCETREE                  1024
 #define IDC_SCENELIST                   1026
+#define IDC_SCENETREE                   1026
 #define IDC_ADDSCENE                    1028
 #define IDC_REMOVESCENE                 1029
 #define IDC_ADDSRC                      1030
@@ -47,6 +55,7 @@
 #define IDC_SHOWKEY                     1050
 #define IDC_OPENFOLDER                  1051
 #define IDC_EDIT6                       1052
+#define ID_CANCEL_BTN                   1056
 #define ID_ABOUT                        40001
 #define ID_FILE                         40002
 #define ID_DEBUG                        40003
@@ -54,14 +63,17 @@
 #define ID_FILE_SETTINGS                40005
 #define ID_FILE_EXIT                    40006
 #define ID_HELP_ABOUT                   40007
+#define ID_DEBUG_CREATEDUMPFILE         40022
+#define ID_CREATE_DUMP_FILE             40023
+#define ID_DEBUG_CREATE_DUMP_FILE       40024
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         40008
-#define _APS_NEXT_CONTROL_VALUE         1052
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_RESOURCE_VALUE        141
+#define _APS_NEXT_COMMAND_VALUE         40025
+#define _APS_NEXT_CONTROL_VALUE         1057
+#define _APS_NEXT_SYMED_VALUE           108
 #endif
 #endif
