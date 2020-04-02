@@ -21,6 +21,9 @@
 #define IDD_AUDIO_CONFIG                128
 #define IDD_OUTPUT_CONFIG               129
 #define IDD_DIALOG_DUMP_FILE_DLG        139
+#define IDD_DIALOG_VIDCAP_CONF          141
+#define IDD_DIALOG_DISPLAYCAPTURE_CONF  143
+#define IDD_DIALOG_WASAPI_CONF          145
 #define IDC_BUTTON1                     1005
 #define IDC_START_RECORDING             1005
 #define IDC_REMOVESRC                   1006
@@ -55,7 +58,6 @@
 #define IDC_SHOWKEY                     1050
 #define IDC_OPENFOLDER                  1051
 #define IDC_EDIT6                       1052
-#define ID_CANCEL_BTN                   1056
 #define ID_ABOUT                        40001
 #define ID_FILE                         40002
 #define ID_DEBUG                        40003
@@ -71,7 +73,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        141
+#define _APS_NEXT_RESOURCE_VALUE        147
 #define _APS_NEXT_COMMAND_VALUE         40025
 #define _APS_NEXT_CONTROL_VALUE         1057
 #define _APS_NEXT_SYMED_VALUE           108

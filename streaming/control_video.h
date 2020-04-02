@@ -1,14 +1,24 @@
 #pragma once
 #include "control_class.h"
+#include "control_configurable.h"
 #include "control_preview.h"
 #include <stack>
+
+struct control_video_params final
+{
+    struct tag_t {};
+    // TODO: this should contain the info
+    // video_params_t now has
+};
 
 // base class for control classes that support video transformations
 
 // TODO: control scene will implement the control video, apply_transformation
 // will update its own transform first and then update all scene items by calling
 // scene_item->apply_transformation();
-class control_video : public control_class
+class control_video : 
+    public control_class,
+    public control_configurable_video
 {
 public:
     struct video_params_t
@@ -36,6 +46,11 @@ private:
     // the parameters
     void build_transformation(const video_params_t& video_params, bool dest_params);
     video_params_t get_video_params(D2D1::Matrix3x2F&&) const;
+
+    // control_configurable
+    control_configurable_video::params_t
+        control_configurable_video::on_show_config_dialog(
+            HWND parent, control_configurable_video::tag_t&&) override;
 protected:
     control_video(control_set_t& active_controls, control_pipeline&);
     // passed transformation is either dst or src transformation
@@ -43,7 +58,11 @@ protected:
     virtual void apply_transformation(const D2D1::Matrix3x2F&&, bool dest_params) = 0;
     virtual void set_default_video_params(video_params_t&, bool dest_params) = 0;
 public:
-    virtual ~control_video() {}
+    virtual ~control_video() = default;
+
+    // control configurable
+    void control_configurable_video::set_params(
+        const control_configurable_video::params_t& new_params) override;
 
     void push_matrix(bool dest_params = true);
     void pop_matrix(bool dest_params = true);

@@ -22,62 +22,13 @@ LRESULT gui_newdlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam
         this->SetWindowTextW(L"Add New Source");
         this->editbox.ShowWindow(SW_HIDE);
 
-        // video
-        {
-            control_displaycapture::list_available_displaycapture_params(this->ctrl_pipeline,
-                this->displaycaptures);
+        this->combobox.AddString(L"Display Capture");
+        this->combobox.AddString(L"Video Device");
+        this->combobox.AddString(L"Audio Device");
 
-            for(auto it = this->displaycaptures.begin(); it != this->displaycaptures.end(); it++)
-            {
-                const LONG w = 
-                    std::abs(it->output.DesktopCoordinates.right - it->output.DesktopCoordinates.left);
-                const LONG h = 
-                    std::abs(it->output.DesktopCoordinates.bottom - it->output.DesktopCoordinates.top);
+        this->vidcap_sel_offset = 1;
+        this->audio_sel_offset = 1 + 1;
 
-                std::wstringstream sts;
-                sts << L"Display Capture Source: ";
-                sts << it->adapter.Description << L": Monitor ";
-                sts << it->output_ordinal << L": " << w << L"x" << h << L" @ ";
-                sts << it->output.DesktopCoordinates.left << L"," 
-                    << it->output.DesktopCoordinates.bottom;
-
-                this->combobox.AddString(sts.str().c_str());
-            }
-        }
-
-        // vidcap
-        {
-            control_vidcap::list_available_vidcap_params(this->ctrl_pipeline,
-                this->vidcaps);
-
-            for(auto&& item : this->vidcaps)
-            {
-                std::wstring text = L"Video Capture Source: " + item.friendly_name;
-                this->combobox.AddString(text.c_str());
-            }
-        }
-
-        this->vidcap_sel_offset = (int)this->displaycaptures.size();
-        this->audio_sel_offset = (int)this->displaycaptures.size() +
-            (int)this->vidcaps.size();
-
-        // audio
-        {
-            control_wasapi::list_available_wasapi_params(this->audios);
-
-            for(auto it = this->audios.begin(); it != this->audios.end(); it++)
-            {
-                std::wstringstream sts;
-                sts << L"Audio Source: ";
-                if(it->capture)
-                    sts << L"Capture Device: ";
-                else
-                    sts << L"Render Device: ";
-                sts << it->device_friendlyname;
-
-                this->combobox.AddString(sts.str().c_str());
-            }
-        }
         break;
     }
 

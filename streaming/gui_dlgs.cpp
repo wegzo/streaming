@@ -1,5 +1,6 @@
 #include "gui_dlgs.h"
 #include "gui_newdlg.h"
+#include "control_configurable.h"
 #include <iostream>
 #include <sstream>
 
@@ -288,8 +289,24 @@ void gui_sourcedlg::on_control_added(control_class* control, bool removed, contr
 
 void gui_sourcedlg::on_control_selection_changed()
 {
-    this->set_selected_item(this->ctrl_pipeline->get_selected_controls().empty() ? nullptr : 
-        this->ctrl_pipeline->get_selected_controls()[0]);
+    control_class* selected_control = 
+        this->ctrl_pipeline->get_selected_controls().empty() ? nullptr :
+        this->ctrl_pipeline->get_selected_controls()[0];
+
+    this->set_selected_item(selected_control);
+
+    control_configurable_class* configurable_control = 
+        dynamic_cast<control_configurable_class*>(selected_control);
+    if(configurable_control)
+    {
+        this->wnd_toolbar.SetButtonInfo(ID_BUTTON_CONFIGURE_SRC,
+            TBIF_STATE, 0, TBSTATE_ENABLED, nullptr, 0, 0, 0, NULL);
+    }
+    else
+    {
+        this->wnd_toolbar.SetButtonInfo(ID_BUTTON_CONFIGURE_SRC,
+            TBIF_STATE, 0, TBSTATE_INDETERMINATE, nullptr, 0, 0, 0, NULL);
+    }
 }
 
 void gui_sourcedlg::set_source_tree(const control_scene* scene)
@@ -395,25 +412,21 @@ LRESULT gui_sourcedlg::OnBnClickedAddsrc(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
             // add the displaycapture and set its params
             std::wostringstream sts;
             sts << L"displaycapture" << this->video_counter;
-            control_displaycapture& displaycapture = *scene->add_displaycapture(sts.str());
-            this->video_counter++;
+            control_displaycapture* displaycapture = scene->add_displaycapture(*this, sts.str());
+            if(!displaycapture)
+                return 0;
 
-            displaycapture.set_displaycapture_params(dlg.displaycaptures[dlg.cursel]);
-            // displaycapture params must be set before setting video params
-            displaycapture.apply_default_video_params();
+            this->video_counter++;
         }
         else if(dlg.cursel < dlg.audio_sel_offset)
         {
             std::wostringstream sts;
             sts << L"vidcap" << this->video_counter;
-            control_vidcap* vidcap = scene->add_vidcap(sts.str());
-            this->video_counter++;
+            control_vidcap* vidcap = scene->add_vidcap(*this, sts.str());
+            if(!vidcap)
+                return 0;
 
-            // TODO: the vidcap control should probably host a dialog where the parameters
-            // can be chosen
-            const int index = dlg.cursel - dlg.vidcap_sel_offset;
-            vidcap->set_vidcap_params(dlg.vidcaps[index]);
-            /*vidcap->apply_default_video_params();*/
+            this->video_counter++;
         }
         else
         {
@@ -422,13 +435,14 @@ LRESULT gui_sourcedlg::OnBnClickedAddsrc(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
 
             std::wostringstream sts;
             sts << L"wasapi" << this->audio_counter;
-            control_wasapi& wasapi = *scene->add_wasapi(sts.str());
-            this->audio_counter++;
+            control_wasapi* wasapi = scene->add_wasapi(*this, sts.str());
+            if(!wasapi)
+                return 0;
 
-            wasapi.set_wasapi_params(dlg.audios[index]);
+            this->audio_counter++;
         }
 
-        ((control_class*)this->ctrl_pipeline.get())->activate();
+        static_cast<control_class*>(this->ctrl_pipeline.get())->activate();
     }
 
     return 0;
@@ -614,6 +628,28 @@ LRESULT gui_sourcedlg::OnBnClickedSrcdown(WORD /*wNotifyCode*/, WORD /*wID*/, HW
                     this->ctrl_pipeline->set_selected_control(selected_control);
             }
         }
+    }
+
+    return 0;
+}
+
+LRESULT gui_sourcedlg::OnBnClickedConfigure(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    control_class* selected_control =
+        this->ctrl_pipeline->get_selected_controls().empty() ? nullptr :
+        this->ctrl_pipeline->get_selected_controls()[0];
+
+    control_configurable_class* configurable_control =
+        dynamic_cast<control_configurable_class*>(selected_control);
+    if(configurable_control)
+    {
+        auto params = configurable_control->show_config_dialog(*this);
+        if(!params)
+            return 0;
+
+        // apply new params
+        configurable_control->set_params(params);
+        static_cast<control_class*>(this->ctrl_pipeline.get())->activate();
     }
 
     return 0;

@@ -93,6 +93,7 @@ public:
         NOTIFY_HANDLER(IDC_SOURCETREE, NM_SETFOCUS, OnSetFocus)
         COMMAND_HANDLER(ID_BUTTON_MOVE_UP_SRC, BN_CLICKED, OnBnClickedSrcup)
         COMMAND_HANDLER(ID_BUTTON_MOVE_DOWN_SRC, BN_CLICKED, OnBnClickedSrcdown)
+        COMMAND_HANDLER(ID_BUTTON_CONFIGURE_SRC, BN_CLICKED, OnBnClickedConfigure)
         CHAIN_MSG_MAP(CDialogResize<gui_sourcedlg>)
 
     // alt message map for source tree view
@@ -111,6 +112,7 @@ public:
     LRESULT OnSetFocus(int /*idCtrl*/, LPNMHDR pNMHDR, BOOL& /*bHandled*/);
     LRESULT OnBnClickedSrcup(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedSrcdown(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnBnClickedConfigure(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnSourceToolbarCustomDraw(int /*wParam*/, LPNMHDR /*lParam*/, BOOL& /*bHandled*/);
     void OnSourceDlgSize(UINT /*nType*/, CSize /*size*/);
 };

@@ -472,6 +472,8 @@ done:
 
 void source_vidcap::initialize_async()
 {
+    std::set_terminate(streaming::terminate_handler_f);
+
     HRESULT hr = S_OK;
     UINT32 fps_num, fps_den;
 

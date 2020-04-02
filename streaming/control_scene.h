@@ -4,6 +4,7 @@
 #include "control_wasapi.h"
 #include "control_vidcap.h"
 #include "transform_videomixer.h"
+#include <Windows.h>
 #include <string>
 #include <list>
 #include <memory>
@@ -48,9 +49,9 @@ public:
     // the added controls must be explicitly activated;
     // the name for the control must be unique;
     // returns NULL if the name wasn't unique
-    control_displaycapture* add_displaycapture(const std::wstring& name, bool add_front = true);
-    control_wasapi* add_wasapi(const std::wstring& name, bool add_front = true);
-    control_vidcap* add_vidcap(const std::wstring& name, bool add_front = true);
+    control_displaycapture* add_displaycapture(HWND, const std::wstring& name, bool add_front = true);
+    control_wasapi* add_wasapi(HWND, const std::wstring& name, bool add_front = true);
+    control_vidcap* add_vidcap(HWND, const std::wstring& name, bool add_front = true);
     control_scene* add_scene(const std::wstring& name, bool add_front = false);
 
     // iterator must be valid;

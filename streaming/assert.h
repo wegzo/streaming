@@ -21,6 +21,8 @@ namespace streaming {
 extern std::atomic_bool async_callback_error;
 extern std::mutex async_callback_error_mutex;
 
+void terminate_handler_f();
+
 class exception : public std::exception
 {
 private:

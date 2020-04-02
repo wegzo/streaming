@@ -140,18 +140,28 @@ void control_scene::activate(const control_set_t& last_set, control_set_t& new_s
     this->event_provider.for_each([this](gui_event_handler* e) { e->on_scene_activate(this, false); });
 }
 
-control_displaycapture* control_scene::add_displaycapture(const std::wstring& name, bool add_front)
+control_displaycapture* control_scene::add_displaycapture(
+    HWND parent, const std::wstring& name, bool add_front)
 {
     bool is_video_control, found;
     this->find_control_iterator(name, is_video_control, found);
     if(found)
-        return NULL;
+        return nullptr;
 
+    // create
     control_displaycapture* ptr;
     control_class_t displaycapture_control(ptr = 
         new control_displaycapture(this->active_controls, this->pipeline));
     displaycapture_control->parent = this;
     displaycapture_control->name = name;
+
+    // set params
+    auto params = static_cast<control_configurable_class*>(ptr)->show_config_dialog(parent);
+    if(!params)
+        return nullptr;
+    static_cast<control_configurable_class*>(ptr)->set_params(params);
+
+    // add
     if(!add_front)
         this->video_controls.push_back(std::move(displaycapture_control));
     else
@@ -165,17 +175,26 @@ control_displaycapture* control_scene::add_displaycapture(const std::wstring& na
     return ptr;
 }
 
-control_wasapi* control_scene::add_wasapi(const std::wstring& name, bool add_front)
+control_wasapi* control_scene::add_wasapi(
+    HWND parent, const std::wstring& name, bool add_front)
 {
     bool is_video_control, found;
     this->find_control_iterator(name, is_video_control, found);
     if(found)
-        return NULL;
+        return nullptr;
 
+    // create
     control_wasapi* ptr;
     control_class_t wasapi_control(ptr = new control_wasapi(this->active_controls, this->pipeline));
     wasapi_control->parent = this;
     wasapi_control->name = name;
+
+    // set params
+    auto params = static_cast<control_configurable_class*>(ptr)->show_config_dialog(parent);
+    if(!params)
+        return nullptr;
+    static_cast<control_configurable_class*>(ptr)->set_params(params);
+
     if(!add_front)
         this->audio_controls.push_back(std::move(wasapi_control));
     else
@@ -189,17 +208,30 @@ control_wasapi* control_scene::add_wasapi(const std::wstring& name, bool add_fro
     return ptr;
 }
 
-control_vidcap* control_scene::add_vidcap(const std::wstring& name, bool add_front)
+control_vidcap* control_scene::add_vidcap(HWND parent, const std::wstring& name, bool add_front)
 {
     bool is_video_control, found;
     this->find_control_iterator(name, is_video_control, found);
     if(found)
-        return NULL;
+        return nullptr;
 
+    // create
     control_vidcap* ptr;
     control_class_t vidcap_control(ptr = new control_vidcap(this->active_controls, this->pipeline));
     vidcap_control->parent = this;
     vidcap_control->name = name;
+
+    // set params
+
+    // for some reason msvc cannot link this, so static cast is used instead
+    /*ptr->control_configurable_class::set_params(params);*/
+
+    auto params = static_cast<control_configurable_class*>(ptr)->show_config_dialog(parent);
+    if(!params)
+        return nullptr;
+    static_cast<control_configurable_class*>(ptr)->set_params(params);
+
+    // add
     if(!add_front)
         this->video_controls.push_back(std::move(vidcap_control));
     else
@@ -218,7 +250,7 @@ control_scene* control_scene::add_scene(const std::wstring& name, bool add_front
     bool is_video_control, found;
     this->find_control_iterator(name, is_video_control, found);
     if(found)
-        return NULL;
+        return nullptr;
 
     control_scene* ptr;
     control_class_t scene_control(ptr = new control_scene(this->active_controls, this->pipeline));

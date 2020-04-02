@@ -13,6 +13,12 @@ class control_pipeline;
 class control_scene;
 class control_class;
 
+struct control_class_params 
+{
+    struct tag_t {};
+    virtual ~control_class_params() = default;
+};
+
 /*
 
 if the component is null(=the control class is deactivated),
@@ -79,7 +85,7 @@ public:
     // used by control classes to produce events and by gui classes to consume them
     gui_event_provider& event_provider;
 
-    virtual ~control_class() {}
+    virtual ~control_class() = default;
 
     // pipeline must use this for accessing control classes;
     // NOTE: all locks should be cleared when calling this to avoid possible deadlocking scenarios

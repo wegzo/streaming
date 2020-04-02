@@ -3,12 +3,92 @@
 
 #define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
+class gui_vidcapdlg final : public CDialogImpl<gui_vidcapdlg>
+{
+private:
+    control_vidcap_params_t current_params;
+    CComboBox combo_device;
+public:
+    enum { IDD = IDD_DIALOG_VIDCAP_CONF };
+
+    explicit gui_vidcapdlg(const control_vidcap_params_t& current_params);
+
+    control_vidcap_params_t new_params;
+    std::vector<control_vidcap_params::device_info_t> devices;
+
+    BEGIN_MSG_MAP(gui_vidcapdlg)
+        MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+        COMMAND_HANDLER(IDOK, BN_CLICKED, OnBnClickedOk)
+        COMMAND_HANDLER(IDCANCEL, BN_CLICKED, OnBnClickedCancel)
+    END_MSG_MAP()
+
+    LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+    LRESULT OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnBnClickedCancel(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+};
+
+gui_vidcapdlg::gui_vidcapdlg(const control_vidcap_params_t& current_params) :
+    current_params(current_params)
+{
+    assert_(this->current_params);
+}
+
+LRESULT gui_vidcapdlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+    this->combo_device.Attach(this->GetDlgItem(IDC_COMBO1));
+
+    // populate devices combo
+    this->devices = control_vidcap::list_vidcap_devices();
+
+    int selected = 0, i = 0;
+    for(const auto& item : this->devices)
+    {
+        if(item.symbolic_link == this->current_params->device_info.symbolic_link)
+            selected = i;
+
+        this->combo_device.AddString(item.friendly_name.c_str());
+        i++;
+    }
+
+    if(!this->devices.empty())
+        this->combo_device.SetCurSel(selected);
+
+    return 0;
+}
+
+LRESULT gui_vidcapdlg::OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    const int cur_sel = this->combo_device.GetCurSel();
+
+    if(cur_sel >= 0 && cur_sel < (int)this->devices.size())
+    {
+        this->new_params = std::make_shared<control_vidcap_params>();
+        this->new_params->device_info = this->devices[cur_sel];
+    }
+
+    this->EndDialog(IDOK);
+    return 0;
+}
+
+LRESULT gui_vidcapdlg::OnBnClickedCancel(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    this->EndDialog(IDCANCEL);
+    return 0;
+}
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+
+
 control_vidcap::control_vidcap(control_set_t& active_controls,
     control_pipeline& pipeline) :
     control_video(active_controls, pipeline),
     pipeline(pipeline),
     videomixer_params(new stream_videomixer_controller),
-    reference(NULL)
+    reference(nullptr),
+    params(new control_vidcap_params)
 {
     this->apply_default_video_params();
 }
@@ -60,8 +140,14 @@ void control_vidcap::activate(const control_set_t& last_set, control_set_t& new_
 {
     source_vidcap_t component;
 
-    this->stream = NULL;
-    this->reference = NULL;
+    this->stream = nullptr;
+    this->reference = nullptr;
+
+    if(this->new_params)
+    {
+        this->component = nullptr;
+        this->params = this->new_params;
+    }
 
     if(this->disabled)
         goto out;
@@ -98,13 +184,19 @@ void control_vidcap::activate(const control_set_t& last_set, control_set_t& new_
             vidcap_source->initialize(this->pipeline.shared_from_this<control_pipeline>(),
                 this->pipeline.d3d11dev,
                 this->pipeline.devctx,
-                this->params.symbolic_link);
+                this->params->device_info.symbolic_link);
 
             component = vidcap_source;
         }
     }
 
     new_set.push_back(this->shared_from_this<control_vidcap>());
+
+    if(this->new_params)
+    {
+        this->new_params = nullptr;
+        this->apply_default_video_params();
+    }
 
 out:
     this->component = component;
@@ -122,15 +214,37 @@ out:
         this->event_provider.for_each([this](gui_event_handler* e) { e->on_activate(this, true); });
 }
 
-void control_vidcap::list_available_vidcap_params(
-    const control_pipeline_t& /*pipeline*/,
-    std::vector<vidcap_params>& params)
+control_configurable_class::params_t
+control_vidcap::on_show_config_dialog(HWND parent, control_configurable_class::tag_t&&)
 {
-    assert_(params.empty());
+    gui_vidcapdlg dlg(this->params);
+    const INT_PTR ret = dlg.DoModal(parent);
+
+    // do not update parameters if they are the same
+    if(dlg.new_params && this->is_same_device(dlg.new_params->device_info))
+        return nullptr;
+
+    return dlg.new_params;
+}
+
+void control_vidcap::set_params(const control_configurable_class::params_t& new_params)
+{
+    control_vidcap_params_t params =
+        std::dynamic_pointer_cast<control_vidcap_params>(new_params);
+    
+    if(!params)
+        throw HR_EXCEPTION(E_UNEXPECTED);
+
+    this->new_params = params;
+}
+
+std::vector<control_vidcap_params::device_info_t> control_vidcap::list_vidcap_devices()
+{
+    std::vector<control_vidcap_params::device_info_t> device_list;
 
     HRESULT hr = S_OK;
     CComPtr<IMFAttributes> attributes;
-    IMFActivate** devices = NULL;
+    IMFActivate** devices = nullptr;
 
     CHECK_HR(hr = MFCreateAttributes(&attributes, 1));
     CHECK_HR(hr = attributes->SetGUID(
@@ -141,27 +255,29 @@ void control_vidcap::list_available_vidcap_params(
     CHECK_HR(hr = MFEnumDeviceSources(attributes, &devices, &count));
     for(UINT32 i = 0; i < count; i++)
     {
-        vidcap_params param;
+        control_vidcap_params::device_info_t device_info;
 
-        WCHAR* friendly_name = NULL, *symbolic_link = NULL;
+        WCHAR* friendly_name = nullptr, *symbolic_link = nullptr;
         UINT32 len;
         CHECK_HR(hr = devices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME,
             &friendly_name, &len));
-        param.friendly_name = friendly_name;
+        device_info.friendly_name = friendly_name;
         CoTaskMemFree(friendly_name);
 
         CHECK_HR(hr = devices[i]->GetAllocatedString(
             MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
             &symbolic_link, &len));
-        param.symbolic_link = symbolic_link;
+        device_info.symbolic_link = symbolic_link;
         CoTaskMemFree(symbolic_link);
 
-        params.push_back(std::move(param));
+        device_list.push_back(std::move(device_info));
     }
 
 done:
     if(FAILED(hr))
         throw HR_EXCEPTION(hr);
+
+    return device_list;
 }
 
 D2D1_RECT_F control_vidcap::get_rectangle(bool /*dest_params*/) const
@@ -212,6 +328,11 @@ void control_vidcap::set_default_video_params(video_params_t& video_params, bool
     video_params.scale = D2D1::Point2F(1.f, 1.f);
 }
 
+bool control_vidcap::is_same_device(const control_vidcap_params::device_info_t& dev_info) const
+{
+    return (this->params->device_info.symbolic_link == dev_info.symbolic_link);
+}
+
 bool control_vidcap::is_identical_control(const control_class_t& control) const
 {
     const control_vidcap* vidcap_control = dynamic_cast<const control_vidcap*>(control.get());
@@ -225,5 +346,5 @@ bool control_vidcap::is_identical_control(const control_class_t& control) const
     if(vidcap_control->component->session != this->pipeline.session)
         return false;
 
-    return (vidcap_control->params.symbolic_link == this->params.symbolic_link);
+    return this->is_same_device(vidcap_control->params->device_info);
 }

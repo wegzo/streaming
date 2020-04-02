@@ -25,9 +25,6 @@ private:
 public:
     enum {IDD = IDD_DIALOG_NEW};
 
-    std::vector<control_vidcap::vidcap_params> vidcaps;
-    std::vector<control_displaycapture::displaycapture_params> displaycaptures;
-    std::vector<control_wasapi::wasapi_params> audios;
     std::wstring new_scene_name;
     int cursel, audio_sel_offset, vidcap_sel_offset;
     int new_item;

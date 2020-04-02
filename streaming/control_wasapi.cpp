@@ -1,15 +1,103 @@
 #include "control_wasapi.h"
 #include "control_pipeline.h"
+#include <sstream>
 #include <mmdeviceapi.h>
 #include <functiondiscoverykeys_devpkey.h>
 
 #define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
+class gui_wasapidlg final : public CDialogImpl<gui_wasapidlg>
+{
+private:
+    control_wasapi_params_t current_params;
+    CComboBox combo_device;
+public:
+    enum { IDD = IDD_DIALOG_WASAPI_CONF };
+
+    explicit gui_wasapidlg(const control_wasapi_params_t& current_params);
+
+    control_wasapi_params_t new_params;
+    std::vector<control_wasapi_params::device_info_t> devices;
+
+    BEGIN_MSG_MAP(gui_wasapidlg)
+        MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+        COMMAND_HANDLER(IDOK, BN_CLICKED, OnBnClickedOk)
+        COMMAND_HANDLER(IDCANCEL, BN_CLICKED, OnBnClickedCancel)
+    END_MSG_MAP()
+
+    LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+    LRESULT OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnBnClickedCancel(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+};
+
+gui_wasapidlg::gui_wasapidlg(const control_wasapi_params_t& current_params) :
+    current_params(current_params)
+{
+    assert_(this->current_params);
+}
+
+LRESULT gui_wasapidlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+    this->combo_device.Attach(this->GetDlgItem(IDC_COMBO1));
+
+    this->devices = control_wasapi::list_wasapi_devices();
+
+    int selected = 0, i = 0;
+    for(const auto& item : this->devices)
+    {
+        if(item.device_id == this->current_params->device_info.device_id &&
+            item.capture == this->current_params->device_info.capture)
+            selected = i;
+
+        std::wstringstream sts;
+        if(item.capture)
+            sts << L"Capture Device: ";
+        else
+            sts << L"Render Device: ";
+        sts << item.device_friendlyname;
+
+        this->combo_device.AddString(sts.str().c_str());
+        i++;
+    }
+
+    if(!this->devices.empty())
+        this->combo_device.SetCurSel(selected);
+
+    return 0;
+}
+
+LRESULT gui_wasapidlg::OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    const int cur_sel = this->combo_device.GetCurSel();
+
+    if(cur_sel >= 0 && cur_sel < (int)this->devices.size())
+    {
+        this->new_params = std::make_shared<control_wasapi_params>();
+        this->new_params->device_info = this->devices[cur_sel];
+    }
+
+    this->EndDialog(IDOK);
+    return 0;
+}
+
+LRESULT gui_wasapidlg::OnBnClickedCancel(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    this->EndDialog(IDCANCEL);
+    return 0;
+}
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+
+
 control_wasapi::control_wasapi(control_set_t& active_controls, control_pipeline& pipeline) :
     control_class(active_controls, pipeline.event_provider),
     audiomixer_params(new stream_audiomixer2_controller),
     pipeline(pipeline),
-    reference(NULL)
+    reference(nullptr),
+    params(new control_wasapi_params)
 {
 }
 
@@ -53,8 +141,14 @@ void control_wasapi::activate(const control_set_t& last_set, control_set_t& new_
 {
     source_wasapi_t component;
 
-    this->stream = NULL;
-    this->reference = NULL;
+    this->stream = nullptr;
+    this->reference = nullptr;
+
+    if(this->new_params)
+    {
+        this->component = nullptr;
+        this->params = this->new_params;
+    }
 
     if(this->disabled)
         goto out;
@@ -91,14 +185,19 @@ void control_wasapi::activate(const control_set_t& last_set, control_set_t& new_
             // create a new component since it was not found in the last or in the new set
             source_wasapi_t wasapi_source(new source_wasapi(this->pipeline.audio_session));
 
-            wasapi_source->initialize(this->pipeline.shared_from_this<control_pipeline>(),
-                this->params.device_id, this->params.capture);
+            wasapi_source->initialize(
+                this->pipeline.shared_from_this<control_pipeline>(),
+                this->params->device_info.device_id, 
+                this->params->device_info.capture);
 
             component = wasapi_source;
         }
     }
 
     new_set.push_back(this->shared_from_this<control_wasapi>());
+
+    if(this->new_params)
+        this->new_params = nullptr;
 
 out:
     this->component = component;
@@ -109,9 +208,34 @@ out:
         this->event_provider.for_each([this](gui_event_handler* e) { e->on_activate(this, true); });
 }
 
-void control_wasapi::list_available_wasapi_params(
-    std::vector<wasapi_params>& wasapis)
+control_configurable_class::params_t control_wasapi::on_show_config_dialog(
+    HWND parent, control_configurable_class::tag_t&&)
 {
+    gui_wasapidlg dlg(this->params);
+    const INT_PTR ret = dlg.DoModal(parent);
+
+    // do not update parameters if they are the same
+    if(dlg.new_params && this->is_same_device(dlg.new_params->device_info))
+        return nullptr;
+
+    return dlg.new_params;
+}
+
+void control_wasapi::set_params(const control_configurable_class::params_t& new_params)
+{
+    control_wasapi_params_t params =
+        std::dynamic_pointer_cast<control_wasapi_params>(new_params);
+
+    if(!params)
+        throw HR_EXCEPTION(E_UNEXPECTED);
+
+    this->new_params = params;
+}
+
+std::vector<control_wasapi_params::device_info_t> control_wasapi::list_wasapi_devices()
+{
+    std::vector<control_wasapi_params::device_info_t> devices;
+
     auto f = [&](EDataFlow flow)
     {
         HRESULT hr = S_OK;
@@ -127,7 +251,7 @@ void control_wasapi::list_available_wasapi_params(
 
         for(UINT i = 0; i < count; i++)
         {
-            wasapi_params params;
+            control_wasapi_params::device_info_t dev_info;
             CComPtr<IMMDevice> device;
             CComPtr<IPropertyStore> props;
             PROPVARIANT name;
@@ -139,15 +263,15 @@ void control_wasapi::list_available_wasapi_params(
             CHECK_HR(hr = device->OpenPropertyStore(STGM_READ, &props));
             CHECK_HR(hr = props->GetValue(PKEY_Device_FriendlyName, &name));
 
-            params.device_friendlyname = name.pwszVal;
-            params.device_id = id;
-            params.capture = (flow == eCapture);
+            dev_info.device_friendlyname = name.pwszVal;
+            dev_info.device_id = id;
+            dev_info.capture = (flow == eCapture);
 
             CoTaskMemFree(id);
             PropVariantClear(&name);
             id = NULL;
 
-            wasapis.push_back(params);
+            devices.push_back(std::move(dev_info));
         }
 
     done:
@@ -158,6 +282,14 @@ void control_wasapi::list_available_wasapi_params(
 
     f(eCapture);
     f(eRender);
+
+    return devices;
+}
+
+bool control_wasapi::is_same_device(const control_wasapi_params::device_info_t& dev_info) const
+{
+    return (this->params->device_info.device_id == dev_info.device_id &&
+        this->params->device_info.capture == dev_info.capture);
 }
 
 bool control_wasapi::is_identical_control(const control_class_t& control) const
@@ -178,6 +310,5 @@ bool control_wasapi::is_identical_control(const control_class_t& control) const
         return false;
 
     // check that the control params match this control's params
-    return (wasapi_control->params.device_id == this->params.device_id &&
-        wasapi_control->params.capture == this->params.capture);
+    return this->is_same_device(wasapi_control->params->device_info);
 }

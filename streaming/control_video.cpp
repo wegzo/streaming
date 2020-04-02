@@ -20,6 +20,18 @@ control_video::control_video(control_set_t& active_controls, control_pipeline& p
     this->push_matrix(false);
 }
 
+control_configurable_video::params_t control_video::on_show_config_dialog(
+    HWND /*parent*/, control_configurable_video::tag_t&&)
+{
+    // TODO
+    return {};
+}
+
+void control_video::set_params(const control_configurable_video::params_t& /*new_params*/)
+{
+    // TODO
+}
+
 void control_video::push_matrix(bool dest_params)
 {
     using namespace D2D1;

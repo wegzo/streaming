@@ -5,6 +5,7 @@
 #include <d3d11.h>
 #include <TlHelp32.h>
 #include "gui_mainwnd.h"
+#include "assert.h"
 #include <mutex>
 
 #pragma comment(lib, "Mfplat.lib")
@@ -79,6 +80,8 @@ int YourReportHook( int reportType, char *message, int *returnValue )
 
 #endif
 
+// note: in msvc, terminate handler is thread local
+
 void terminate_handler_f(LPEXCEPTION_POINTERS excp_pointers)
 {
     static std::mutex terminate_handler_mutex;
@@ -123,9 +126,9 @@ void terminate_handler_f(LPEXCEPTION_POINTERS excp_pointers)
         }).join();
 }
 
-void terminate_handler_f()
+void streaming::terminate_handler_f()
 {
-    terminate_handler_f(nullptr);
+    ::terminate_handler_f(nullptr);
 }
 
 LONG WINAPI unhandled_exception_handler(LPEXCEPTION_POINTERS excp_pointers)
@@ -145,7 +148,7 @@ LONG WINAPI unhandled_exception_handler(LPEXCEPTION_POINTERS excp_pointers)
 
 int main()
 {
-    std::set_terminate(terminate_handler_f);
+    std::set_terminate(streaming::terminate_handler_f);
     SetUnhandledExceptionFilter(unhandled_exception_handler);
 
     try

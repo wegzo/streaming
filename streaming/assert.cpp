@@ -43,8 +43,6 @@ void streaming::check_for_errors()
 
 void streaming::print_error_and_abort(const char* str)
 {
-    // TODO: create memory dump here
-
     typedef std::lock_guard<std::mutex> scoped_lock;
     scoped_lock lock(async_callback_error_mutex);
     async_callback_error = true;

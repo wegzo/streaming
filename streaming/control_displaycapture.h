@@ -6,22 +6,30 @@
 #include <vector>
 
 class control_pipeline;
-// TODO: rename typedef
-typedef std::shared_ptr<control_pipeline> control_pipeline_t;
+using control_pipeline_t = std::shared_ptr<control_pipeline>;
 
-class control_displaycapture : public control_video
+struct control_displaycapture_params : control_class_params
 {
-    friend class control_scene;
-public:
-    struct displaycapture_params
+    struct device_info_t
     {
         UINT adapter_ordinal, output_ordinal;
         DXGI_ADAPTER_DESC1 adapter;
         DXGI_OUTPUT_DESC output;
     };
+
+    device_info_t device_info;
+};
+
+using control_displaycapture_params_t = std::shared_ptr<control_displaycapture_params>;
+
+class control_displaycapture : 
+    public control_video,
+    public control_configurable_class
+{
+    friend class control_scene;
 private:
     control_pipeline& pipeline;
-    displaycapture_params params;
+    control_displaycapture_params_t params, new_params;
     source_displaycapture_t component;
     stream_videomixer_controller_t videomixer_params;
 
@@ -33,6 +41,11 @@ private:
         const media_stream_t& to, const media_topology_t&);
     void activate(const control_set_t& last_set, control_set_t& new_set);
 
+    // control configurable
+    control_configurable_class::params_t
+        control_configurable_class::on_show_config_dialog(
+            HWND parent, control_configurable_class::tag_t&&) override;
+
     // control_video
     void apply_transformation(const D2D1::Matrix3x2F&&, bool dest_params);
     void set_default_video_params(video_params_t&, bool dest_params);
@@ -42,18 +55,15 @@ public:
     // control_video
     D2D1_RECT_F get_rectangle(bool dest_params) const;
 
-    // before the displaycapture can be activated, right params must be chosen and set
-    static void list_available_displaycapture_params(const control_pipeline_t&,
-        std::vector<displaycapture_params>&);
+    // control configurable
+    void control_configurable_class::set_params(
+        const control_configurable_class::params_t& new_params) override;
+
+    static std::vector<control_displaycapture_params::device_info_t> 
+        list_displaycapture_devices(IDXGIFactory1* factory);
+
     // TODO: set displaycapture params sets the initial videoprocessor params aswell
-    // set displaycapture params will cause the scene to reactivate itself if it is called
-    // while it is active
-    void set_displaycapture_params(const displaycapture_params& params) {this->params = params;}
 
-    /*void apply_default_video_params();*/
-
-    // checks if the control's displaycapture parameters match this class' parameters
+    bool is_same_device(const control_displaycapture_params::device_info_t&) const;
     bool is_identical_control(const control_class_t&) const;
-
-    /*bool is_activated() const;*/
 };

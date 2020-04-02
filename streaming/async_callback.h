@@ -2,6 +2,7 @@
 
 #include "AsyncCallback.h"
 #include "IUnknownImpl.h"
+#include "assert.h"
 #include <mfapi.h>
 #include <atlbase.h>
 #include <memory>
@@ -29,6 +30,9 @@ private:
 
     HRESULT mf_cb(IMFAsyncResult* res)
     {
+        if(std::get_terminate() != streaming::terminate_handler_f)
+            std::set_terminate(streaming::terminate_handler_f);
+
         std::shared_ptr<T> parent;
         {
             scoped_lock lock(this->mutex);

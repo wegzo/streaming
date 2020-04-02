@@ -1,14 +1,115 @@
 #include "control_displaycapture.h"
 #include "control_pipeline.h"
+#include <sstream>
 
 #define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
+
+class gui_displaycapturedlg final : public CDialogImpl<gui_displaycapturedlg>
+{
+private:
+    const control_pipeline& ctrl_pipeline;
+    control_displaycapture_params_t current_params;
+    CComboBox combo_device;
+public:
+    enum { IDD = IDD_DIALOG_DISPLAYCAPTURE_CONF };
+
+    explicit gui_displaycapturedlg(
+        const control_pipeline&,
+        const control_displaycapture_params_t& current_params);
+
+    control_displaycapture_params_t new_params;
+    std::vector<control_displaycapture_params::device_info_t> devices;
+
+    BEGIN_MSG_MAP(gui_displaycapturedlg)
+        MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+        COMMAND_HANDLER(IDOK, BN_CLICKED, OnBnClickedOk)
+        COMMAND_HANDLER(IDCANCEL, BN_CLICKED, OnBnClickedCancel)
+    END_MSG_MAP()
+
+    LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+    LRESULT OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnBnClickedCancel(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+};
+
+gui_displaycapturedlg::gui_displaycapturedlg(
+    const control_pipeline& ctrl_pipeline,
+    const control_displaycapture_params_t& current_params) :
+    ctrl_pipeline(ctrl_pipeline),
+    current_params(current_params)
+{
+    assert_(this->current_params);
+}
+
+LRESULT gui_displaycapturedlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+    this->combo_device.Attach(this->GetDlgItem(IDC_COMBO1));
+
+    // populate devices combo
+    this->devices = 
+        control_displaycapture::list_displaycapture_devices(this->ctrl_pipeline.dxgifactory);
+
+    int selected = 0, i = 0;
+    for(const auto& item : this->devices)
+    {
+        // TODO: is same device should be used here
+        if(item.adapter_ordinal == this->current_params->device_info.adapter_ordinal &&
+            item.output_ordinal == this->current_params->device_info.output_ordinal)
+            selected = i;
+
+        const LONG w = std::abs(
+            item.output.DesktopCoordinates.right - item.output.DesktopCoordinates.left);
+        const LONG h =
+            std::abs(item.output.DesktopCoordinates.bottom - item.output.DesktopCoordinates.top);
+
+        std::wstringstream sts;
+        sts << item.adapter.Description << L": Monitor ";
+        sts << item.output_ordinal << L": " << w << L"x" << h << L" @ ";
+        sts << item.output.DesktopCoordinates.left << L","
+            << item.output.DesktopCoordinates.bottom;
+
+        this->combo_device.AddString(sts.str().c_str());
+        i++;
+    }
+
+    if(!this->devices.empty())
+        this->combo_device.SetCurSel(selected);
+
+    return 0;
+}
+
+LRESULT gui_displaycapturedlg::OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    const int cur_sel = this->combo_device.GetCurSel();
+
+    if(cur_sel >= 0 && cur_sel < (int)this->devices.size())
+    {
+        this->new_params = std::make_shared<control_displaycapture_params>();
+        this->new_params->device_info = this->devices[cur_sel];
+    }
+
+    this->EndDialog(IDOK);
+    return 0;
+}
+
+LRESULT gui_displaycapturedlg::OnBnClickedCancel(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    this->EndDialog(IDCANCEL);
+    return 0;
+}
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+
 
 control_displaycapture::control_displaycapture(control_set_t& active_controls, 
     control_pipeline& pipeline) :
     control_video(active_controls, pipeline),
     videomixer_params(new stream_videomixer_controller),
     pipeline(pipeline),
-    reference(NULL)
+    reference(nullptr),
+    params(new control_displaycapture_params)
 {
 }
 
@@ -68,9 +169,15 @@ void control_displaycapture::activate(const control_set_t& last_set, control_set
 {
     source_displaycapture_t component;
 
-    this->stream = NULL;
-    this->pointer_stream = NULL;
-    this->reference = NULL;
+    this->stream = nullptr;
+    this->pointer_stream = nullptr;
+    this->reference = nullptr;
+
+    if(this->new_params)
+    {
+        this->component = nullptr;
+        this->params = this->new_params;
+    }
 
     if(this->disabled)
         goto out;
@@ -110,15 +217,16 @@ void control_displaycapture::activate(const control_set_t& last_set, control_set
             source_displaycapture_t displaycapture_source(
                 new source_displaycapture(this->pipeline.session, this->pipeline.context_mutex));
 
-            if(this->params.adapter_ordinal == this->pipeline.get_adapter_ordinal())
+            if(this->params->device_info.adapter_ordinal == this->pipeline.get_adapter_ordinal())
                 displaycapture_source->initialize(
                     this->pipeline.shared_from_this<control_pipeline>(),
-                    this->params.output_ordinal, 
+                    this->params->device_info.output_ordinal,
                     this->pipeline.d3d11dev, this->pipeline.devctx);
             else
                 displaycapture_source->initialize(
                     this->pipeline.shared_from_this<control_pipeline>(),
-                    this->params.adapter_ordinal, this->params.output_ordinal, 
+                    this->params->device_info.adapter_ordinal, 
+                    this->params->device_info.output_ordinal,
                     this->pipeline.dxgifactory, this->pipeline.d3d11dev, this->pipeline.devctx);
 
             component = displaycapture_source;
@@ -126,6 +234,14 @@ void control_displaycapture::activate(const control_set_t& last_set, control_set
     }
 
     new_set.push_back(this->shared_from_this<control_displaycapture>());
+
+    // if the control has its parameters changed, control displaycapture
+    // needs to have its video params updated
+    if(this->new_params)
+    {
+        this->new_params = nullptr;
+        this->apply_default_video_params();
+    }
 
 out:
     this->component = component;
@@ -136,43 +252,72 @@ out:
         this->event_provider.for_each([this](gui_event_handler* e) { e->on_activate(this, true); });
 }
 
-void control_displaycapture::list_available_displaycapture_params(
-    const control_pipeline_t& pipeline,
-    std::vector<displaycapture_params>& displaycaptures)
+control_configurable_class::params_t
+control_displaycapture::on_show_config_dialog(HWND parent, control_configurable_class::tag_t&&)
 {
-    assert_(displaycaptures.empty());
+    gui_displaycapturedlg dlg(this->pipeline, this->params);
+    const INT_PTR ret = dlg.DoModal(parent);
+
+    // do not update parameters if they are the same
+    if(dlg.new_params && this->is_same_device(dlg.new_params->device_info))
+        return nullptr;
+
+    return dlg.new_params;
+}
+
+void control_displaycapture::set_params(const control_configurable_class::params_t& new_params)
+{
+    control_displaycapture_params_t params =
+        std::dynamic_pointer_cast<control_displaycapture_params>(new_params);
+
+    if(!params)
+        throw HR_EXCEPTION(E_UNEXPECTED);
+
+    this->new_params = params;
+}
+
+std::vector<control_displaycapture_params::device_info_t> 
+control_displaycapture::list_displaycapture_devices(IDXGIFactory1* factory)
+{
+    assert_(factory);
+
+    std::vector<control_displaycapture_params::device_info_t> devices;
 
     HRESULT hr = S_OK;
     CComPtr<IDXGIAdapter1> adapter;
-    for(UINT i = 0; SUCCEEDED(hr = pipeline->dxgifactory->EnumAdapters1(i, &adapter)); i++)
+    for(UINT i = 0; SUCCEEDED(hr = factory->EnumAdapters1(i, &adapter)); i++)
     {
         CComPtr<IDXGIOutput> output;
         for(UINT j = 0; SUCCEEDED(hr = adapter->EnumOutputs(j, &output)); j++)
         {
-            displaycapture_params params;
-            CHECK_HR(hr = adapter->GetDesc1(&params.adapter));
-            CHECK_HR(hr = output->GetDesc(&params.output));
-            params.adapter_ordinal = i;
-            params.output_ordinal = j;
+            control_displaycapture_params::device_info_t device_info;
+            CHECK_HR(hr = adapter->GetDesc1(&device_info.adapter));
+            CHECK_HR(hr = output->GetDesc(&device_info.output));
+            device_info.adapter_ordinal = i;
+            device_info.output_ordinal = j;
 
-            displaycaptures.push_back(params);
-            output = NULL;
+            devices.push_back(std::move(device_info));
+            output = nullptr;
         }
 
-        adapter = NULL;
+        adapter = nullptr;
     }
 
 done:
     if(hr != DXGI_ERROR_NOT_FOUND && FAILED(hr))
         throw HR_EXCEPTION(hr);
+
+    return devices;
 }
 
 D2D1_RECT_F control_displaycapture::get_rectangle(bool dest_params) const
 {
-    const FLOAT width = (FLOAT)std::abs(this->params.output.DesktopCoordinates.right -
-        this->params.output.DesktopCoordinates.left),
-        height = (FLOAT)std::abs(this->params.output.DesktopCoordinates.bottom -
-            this->params.output.DesktopCoordinates.top);
+    const FLOAT width = (FLOAT)std::abs(
+        this->params->device_info.output.DesktopCoordinates.right -
+        this->params->device_info.output.DesktopCoordinates.left),
+        height = (FLOAT)std::abs(
+            this->params->device_info.output.DesktopCoordinates.bottom -
+            this->params->device_info.output.DesktopCoordinates.top);
 
     D2D1_RECT_F rect;
     rect.left = 0.f;
@@ -216,6 +361,13 @@ void control_displaycapture::set_default_video_params(video_params_t& video_para
     video_params.scale = D2D1::Point2F(1.f, 1.f);
 }
 
+bool control_displaycapture::is_same_device(
+    const control_displaycapture_params::device_info_t& dev_info) const
+{
+    return (this->params->device_info.adapter_ordinal == dev_info.adapter_ordinal &&
+        this->params->device_info.output_ordinal == dev_info.output_ordinal);
+}
+
 bool control_displaycapture::is_identical_control(const control_class_t& control) const
 {
     const control_displaycapture* displaycapture_control =
@@ -235,6 +387,5 @@ bool control_displaycapture::is_identical_control(const control_class_t& control
         return false;
 
     // check that the control params match this control's params
-    return (displaycapture_control->params.adapter_ordinal == this->params.adapter_ordinal &&
-        displaycapture_control->params.output_ordinal == this->params.output_ordinal);
+    return this->is_same_device(displaycapture_control->params->device_info);
 }

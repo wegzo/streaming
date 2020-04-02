@@ -231,6 +231,7 @@
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -252,6 +253,7 @@
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -275,6 +277,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <SupportJustMyCode>true</SupportJustMyCode>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -300,6 +303,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <SupportJustMyCode>false</SupportJustMyCode>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -326,6 +330,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -351,6 +356,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -376,6 +382,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -401,6 +408,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -428,6 +436,7 @@
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -455,6 +464,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -527,6 +537,7 @@
     <ClInclude Include="audio_resampler.h" />
     <ClInclude Include="buffer_pool.h" />
     <ClInclude Include="control_class.h" />
+    <ClInclude Include="control_configurable.h" />
     <ClInclude Include="control_displaycapture.h" />
     <ClInclude Include="control_pipeline.h" />
     <ClInclude Include="control_preview.h" />

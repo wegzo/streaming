@@ -44,6 +44,12 @@ public:
 
 using gui_dumpfiledlg_t = std::shared_ptr<gui_dumpfiledlg>;
 
+
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+
+
 gui_dumpfiledlg::gui_dumpfiledlg(
     LPEXCEPTION_POINTERS excp_pointers,
     control_pipeline* ctrl_pipeline,
@@ -479,7 +485,7 @@ LRESULT gui_mainwnd::OnDpiChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, B
 
 LRESULT gui_mainwnd::OnAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    this->MessageBoxW(L"scuffed gui ver. 0.1", L"About", MB_ICONINFORMATION);
+    this->MessageBoxW(L"slightly less scuffed gui ver. 0.5", L"About", MB_ICONINFORMATION);
     return 0;
 }
 
