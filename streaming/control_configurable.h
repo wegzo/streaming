@@ -28,14 +28,6 @@ public:
 
     params_t show_config_dialog(HWND parent) { return this->on_show_config_dialog(parent, {}); }
     virtual void set_params(const params_t& new_params) = 0;
-
-    // scene control handles these:
-    // params show_config_dialog() (null params are returned if user cancelled)
-    // set_params(params);
-    // (if null params were returned, scene control returns null control)
-
-    // then:
-    // activate
 };
 
 using control_configurable_video = control_configurable<control_video_params>;

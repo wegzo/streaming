@@ -269,7 +269,7 @@ std::vector<control_wasapi_params::device_info_t> control_wasapi::list_wasapi_de
 
             CoTaskMemFree(id);
             PropVariantClear(&name);
-            id = NULL;
+            id = nullptr;
 
             devices.push_back(std::move(dev_info));
         }
