@@ -27,7 +27,7 @@ public:
     // updates the settings relevant to this config dlg in the full config
     virtual void update_settings(control_pipeline_config&) = 0;
 
-    void set_splitter(CStatic&);
+    static void set_splitter(CStatic&);
 };
 
 class gui_configdlg_general final : 

@@ -6,31 +6,49 @@
 
 #define CHECK_HR(hr_) {if(FAILED(hr_)) [[unlikely]] {goto done;}}
 
+// TODO: current_params probably should be just a device info struct
+
 class gui_wasapidlg final : public CDialogImpl<gui_wasapidlg>
 {
 private:
     control_wasapi_params_t current_params;
     CComboBox combo_device;
+    CTrackBarCtrl wnd_trackbar;
+    CEdit wnd_volume_edit;
 public:
     enum { IDD = IDD_DIALOG_WASAPI_CONF };
 
-    explicit gui_wasapidlg(const control_wasapi_params_t& current_params);
+    explicit gui_wasapidlg(
+        double audiomixer_boost,
+        const control_wasapi_params_t& current_params);
 
+    double audiomixer_boost;
     control_wasapi_params_t new_params;
     std::vector<control_wasapi_params::device_info_t> devices;
 
     BEGIN_MSG_MAP(gui_wasapidlg)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+        MESSAGE_HANDLER(WM_HSCROLL, OnTrackBarScroll)
         COMMAND_HANDLER(IDOK, BN_CLICKED, OnBnClickedOk)
         COMMAND_HANDLER(IDCANCEL, BN_CLICKED, OnBnClickedCancel)
+        COMMAND_HANDLER(IDC_EDIT1, EN_CHANGE, OnVolumeEditChanged)
+        COMMAND_HANDLER(IDC_EDIT1, EN_SETFOCUS, OnVolumeEditSetFocus)
+        COMMAND_HANDLER(IDC_EDIT1, EN_KILLFOCUS, OnVolumeEditKillFocus)
     END_MSG_MAP()
 
     LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+    LRESULT OnTrackBarScroll(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnBnClickedCancel(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnVolumeEditChanged(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnVolumeEditSetFocus(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnVolumeEditKillFocus(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };
 
-gui_wasapidlg::gui_wasapidlg(const control_wasapi_params_t& current_params) :
+gui_wasapidlg::gui_wasapidlg(
+    double audiomixer_boost,
+    const control_wasapi_params_t& current_params) :
+    audiomixer_boost(audiomixer_boost),
     current_params(current_params)
 {
     assert_(this->current_params);
@@ -39,6 +57,15 @@ gui_wasapidlg::gui_wasapidlg(const control_wasapi_params_t& current_params) :
 LRESULT gui_wasapidlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
     this->combo_device.Attach(this->GetDlgItem(IDC_COMBO1));
+    this->wnd_trackbar.Attach(this->GetDlgItem(IDC_SLIDER1));
+    this->wnd_volume_edit.Attach(this->GetDlgItem(IDC_EDIT1));
+
+    this->wnd_trackbar.SetRangeMin(0);
+    this->wnd_trackbar.SetRangeMax(200);
+    this->wnd_trackbar.SetPos((int)this->audiomixer_boost);
+
+    this->wnd_volume_edit.SetWindowTextW(
+        std::to_wstring((int)this->audiomixer_boost).c_str());
 
     this->devices = control_wasapi::list_wasapi_devices();
 
@@ -66,6 +93,14 @@ LRESULT gui_wasapidlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
     return 0;
 }
 
+LRESULT gui_wasapidlg::OnTrackBarScroll(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+    const int pos = this->wnd_trackbar.GetPos();
+    this->wnd_volume_edit.SetWindowTextW(std::to_wstring(pos).c_str());
+
+    return 0;
+}
+
 LRESULT gui_wasapidlg::OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     const int cur_sel = this->combo_device.GetCurSel();
@@ -74,6 +109,21 @@ LRESULT gui_wasapidlg::OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*
     {
         this->new_params = std::make_shared<control_wasapi_params>();
         this->new_params->device_info = this->devices[cur_sel];
+
+        CString text;
+        this->wnd_volume_edit.GetWindowTextW(text);
+
+        try
+        {
+            if(text.IsEmpty())
+                throw std::exception();
+            this->audiomixer_boost = (double)std::stoi(std::wstring(text.GetString()));
+        }
+        catch(std::exception)
+        {
+            this->MessageBoxW(L"Invalid volume value", nullptr, MB_ICONERROR);
+            return 0;
+        }
     }
 
     this->EndDialog(IDOK);
@@ -83,6 +133,49 @@ LRESULT gui_wasapidlg::OnBnClickedOk(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*
 LRESULT gui_wasapidlg::OnBnClickedCancel(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     this->EndDialog(IDCANCEL);
+    return 0;
+}
+
+LRESULT gui_wasapidlg::OnVolumeEditChanged(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    CString text;
+    this->wnd_volume_edit.GetWindowTextW(text);
+
+    int edit_pos = 0;
+    try
+    {
+        if(text.IsEmpty())
+            throw std::exception();
+        edit_pos = std::stoi(std::wstring(text.GetString()));
+    }
+    catch(std::exception)
+    {
+        this->MessageBoxW(L"Invalid volume value", nullptr, MB_ICONERROR);
+        return 0;
+    }
+
+    this->wnd_trackbar.SetPos(edit_pos);
+
+    return 0;
+}
+
+LRESULT gui_wasapidlg::OnVolumeEditSetFocus(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    this->wnd_volume_edit.SetSelAll();
+    return 0;
+}
+
+LRESULT gui_wasapidlg::OnVolumeEditKillFocus(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    CString text;
+    this->wnd_volume_edit.GetWindowTextW(text);
+
+    if(text.IsEmpty())
+    {
+        const int pos = this->wnd_trackbar.GetPos();
+        this->wnd_volume_edit.SetWindowTextW(std::to_wstring(pos).c_str());
+    }
+
     return 0;
 }
 
@@ -211,8 +304,15 @@ out:
 control_configurable_class::params_t control_wasapi::on_show_config_dialog(
     HWND parent, control_configurable_class::tag_t&&)
 {
-    gui_wasapidlg dlg(this->params);
-    const INT_PTR ret = dlg.DoModal(parent);
+    stream_audiomixer2_controller::params_t audiomixer_param_values;
+    this->audiomixer_params->get_params(audiomixer_param_values);
+
+    gui_wasapidlg dlg(audiomixer_param_values.boost, this->params);
+    dlg.DoModal(parent);
+
+    // always update the audiomixer params, since they do not need a topology reactivation
+    audiomixer_param_values.boost = dlg.audiomixer_boost;
+    this->audiomixer_params->set_params(audiomixer_param_values);
 
     // do not update parameters if they are the same
     if(dlg.new_params && this->is_same_device(dlg.new_params->device_info))

@@ -12,7 +12,10 @@
 #define ID_BUTTON_CONFIGURE_SRC         106
 #define ID_BUTTON_ADD_SRC               107
 #define IDD_SOURCEDLG                   108
+#define ID_MENU_BTN_DISPLAYCAPTURE      108
+#define ID_MENU_BTN_VIDCAP              109
 #define IDD_SCENEDLG                    110
+#define ID_MENU_BTN_WASAPI              110
 #define IDD_CTRLDLG                     112
 #define IDI_ICON1                       122
 #define IDD_GENERAL_CONFIG              123
@@ -58,6 +61,7 @@
 #define IDC_SHOWKEY                     1050
 #define IDC_OPENFOLDER                  1051
 #define IDC_EDIT6                       1052
+#define IDC_SLIDER1                     1057
 #define ID_ABOUT                        40001
 #define ID_FILE                         40002
 #define ID_DEBUG                        40003
@@ -75,7 +79,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        147
 #define _APS_NEXT_COMMAND_VALUE         40025
-#define _APS_NEXT_CONTROL_VALUE         1057
-#define _APS_NEXT_SYMED_VALUE           108
+#define _APS_NEXT_CONTROL_VALUE         1058
+#define _APS_NEXT_SYMED_VALUE           111
 #endif
 #endif

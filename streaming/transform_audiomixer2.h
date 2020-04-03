@@ -17,7 +17,8 @@ public:
     typedef std::lock_guard<std::mutex> scoped_lock;
     struct params_t
     {
-        double boost;
+        // the boost is in percentages
+        double boost = 100.0;
     };
 private:
     mutable std::mutex mutex;

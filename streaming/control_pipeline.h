@@ -86,7 +86,7 @@ struct control_video_config
     UINT32 bitrate = 6000; // avg bitrate (in kbps)
     UINT32 quality_vs_speed = 100;
     eAVEncH264VProfile h264_video_profile = eAVEncH264VProfile_Main;
-    DXGI_COLOR_SPACE_TYPE color_space = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709;
+    DXGI_COLOR_SPACE_TYPE color_space = DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709;
 };
 
 struct control_audio_config

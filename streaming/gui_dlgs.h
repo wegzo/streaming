@@ -63,6 +63,7 @@ private:
     CContainedWindowT<CTreeViewCtrlEx> wnd_sourcetree;
     CToolBarCtrl wnd_toolbar;
     CFont font_toolbar;
+    CMenu menu_sources;
 
     bool do_not_reselect;
     control_scene* current_active_scene;

@@ -215,7 +215,12 @@ void stream_audiomixer2::mix(out_arg_t& out_arg, args_t& packets,
 
                 for(UINT32 j = 0; j < transform_aac_encoder::channels; j++)
                 {
-                    const int64_t temp = out_data[j] + (int64_t)(in_data[j] *
+                    in_bit_depth_t boost = (in_bit_depth_t)(consec_frames.params.boost / 100.0);
+                    if(item.valid_user_params)
+                        boost *= (in_bit_depth_t)(item.user_params.boost / 100.0);
+
+                    const int64_t temp = out_data[j] + (int64_t)
+                        (in_data[j] * boost *
                         std::numeric_limits<transform_aac_encoder::bit_depth_t>::max());
 
                     // clamp

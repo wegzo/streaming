@@ -1,5 +1,4 @@
 #include "gui_dlgs.h"
-#include "gui_newdlg.h"
 #include "control_configurable.h"
 #include <iostream>
 #include <sstream>
@@ -386,8 +385,21 @@ unselect:
 
 LRESULT gui_sourcedlg::OnBnClickedAddsrc(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    control_scene* scene;
+    control_scene* scene = nullptr;
+
+    POINT cur_pos = {0};
+    GetCursorPos(&cur_pos);
+    const UINT selected_cmd = (UINT)this->menu_sources.TrackPopupMenu(
+        TPM_LEFTALIGN | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD,
+        cur_pos.x, cur_pos.y,
+        *this,
+        nullptr);
+
+    // set the focus to the source list
+    this->wnd_sourcetree.SetFocus();
+
     // add the first scene if there wasn't a scene before
+    if(selected_cmd != 0)
     {
         scene = this->ctrl_pipeline->root_scene->get_selected_scene();
         if(!scene)
@@ -400,50 +412,39 @@ LRESULT gui_sourcedlg::OnBnClickedAddsrc(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
         }
     }
 
-    gui_newdlg dlg(this->ctrl_pipeline);
-    const INT_PTR ret = dlg.DoModal(*this, gui_newdlg::NEW_VIDEO);
-    if(ret == 0)
+    if(selected_cmd == ID_MENU_BTN_DISPLAYCAPTURE)
     {
-        // set the focus to the source list
-        this->wnd_sourcetree.SetFocus();
+        std::wostringstream sts;
+        sts << L"displaycapture" << this->video_counter;
+        control_displaycapture* displaycapture = scene->add_displaycapture(*this, sts.str());
+        if(!displaycapture)
+            return 0;
 
-        if(dlg.cursel < dlg.vidcap_sel_offset)
-        {
-            // add the displaycapture and set its params
-            std::wostringstream sts;
-            sts << L"displaycapture" << this->video_counter;
-            control_displaycapture* displaycapture = scene->add_displaycapture(*this, sts.str());
-            if(!displaycapture)
-                return 0;
-
-            this->video_counter++;
-        }
-        else if(dlg.cursel < dlg.audio_sel_offset)
-        {
-            std::wostringstream sts;
-            sts << L"vidcap" << this->video_counter;
-            control_vidcap* vidcap = scene->add_vidcap(*this, sts.str());
-            if(!vidcap)
-                return 0;
-
-            this->video_counter++;
-        }
-        else
-        {
-            // audio
-            const int index = dlg.cursel - dlg.audio_sel_offset;
-
-            std::wostringstream sts;
-            sts << L"wasapi" << this->audio_counter;
-            control_wasapi* wasapi = scene->add_wasapi(*this, sts.str());
-            if(!wasapi)
-                return 0;
-
-            this->audio_counter++;
-        }
-
-        static_cast<control_class*>(this->ctrl_pipeline.get())->activate();
+        this->video_counter++;
     }
+    else if(selected_cmd == ID_MENU_BTN_VIDCAP)
+    {
+        std::wostringstream sts;
+        sts << L"vidcap" << this->video_counter;
+        control_vidcap* vidcap = scene->add_vidcap(*this, sts.str());
+        if(!vidcap)
+            return 0;
+
+        this->video_counter++;
+    }
+    else if(selected_cmd == ID_MENU_BTN_WASAPI)
+    {
+        std::wostringstream sts;
+        sts << L"wasapi" << this->audio_counter;
+        control_wasapi* wasapi = scene->add_wasapi(*this, sts.str());
+        if(!wasapi)
+            return 0;
+
+        this->audio_counter++;
+    }
+
+    if(selected_cmd != 0)
+        static_cast<control_class*>(this->ctrl_pipeline.get())->activate();
 
     return 0;
 }
@@ -521,6 +522,21 @@ LRESULT gui_sourcedlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
     this->wnd_toolbar.AutoSize();
     this->wnd_toolbar.ShowWindow(SW_SHOW);
 
+    this->menu_sources.Attach(CreatePopupMenu());
+    this->menu_sources.AppendMenuW(
+        MF_ENABLED | MF_STRING,
+        ID_MENU_BTN_DISPLAYCAPTURE,
+        L"Display Capture Source");
+    this->menu_sources.AppendMenuW(
+        MF_ENABLED | MF_STRING,
+        ID_MENU_BTN_VIDCAP,
+        L"Video Capture Source");
+    this->menu_sources.AppendMenuW(
+        MF_ENABLED | MF_STRING,
+        ID_MENU_BTN_WASAPI,
+        L"Audio Source");
+
+
     return TRUE;
 }
 
@@ -585,7 +601,7 @@ LRESULT gui_sourcedlg::OnBnClickedSrcup(WORD /*wNotifyCode*/, WORD /*wID*/, HWND
                 control_class* selected_control =
                     this->ctrl_pipeline->get_selected_controls().empty() ? nullptr :
                     this->ctrl_pipeline->get_selected_controls()[0];
-                ((control_class*)this->ctrl_pipeline.get())->activate();
+                static_cast<control_class*>(this->ctrl_pipeline.get())->activate();
                 if(selected_control)
                     this->ctrl_pipeline->set_selected_control(selected_control);
             }
@@ -623,7 +639,7 @@ LRESULT gui_sourcedlg::OnBnClickedSrcdown(WORD /*wNotifyCode*/, WORD /*wID*/, HW
                 control_class* selected_control =
                     this->ctrl_pipeline->get_selected_controls().empty() ? nullptr :
                     this->ctrl_pipeline->get_selected_controls()[0];
-                ((control_class*)this->ctrl_pipeline.get())->activate();
+                static_cast<control_class*>(this->ctrl_pipeline.get())->activate();
                 if(selected_control)
                     this->ctrl_pipeline->set_selected_control(selected_control);
             }
