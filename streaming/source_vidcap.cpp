@@ -270,6 +270,8 @@ HRESULT source_vidcap::source_reader_callback_t::OnReadSample(HRESULT hr, DWORD 
         {
             CComPtr<IMFMediaBuffer> buffer;
             CComPtr<IMFDXGIBuffer> dxgi_buffer;
+            CComPtr<IMFMediaBuffer> new_buffer;
+            CComPtr<IMF2DBuffer2> buffer_2d, new_buffer_2d;
             CComPtr<ID3D11Texture2D> texture;
             media_clock_t clock = source->session->get_clock();
             media_sample_video_mixer_frame frame;
@@ -282,6 +284,7 @@ HRESULT source_vidcap::source_reader_callback_t::OnReadSample(HRESULT hr, DWORD 
             }
 
             CHECK_HR(hr = sample->GetBufferByIndex(0, &buffer));
+            CHECK_HR(hr = buffer->QueryInterface(&buffer_2d));
             CHECK_HR(hr = buffer->QueryInterface(&dxgi_buffer));
             CHECK_HR(hr = dxgi_buffer->GetResource(__uuidof(ID3D11Texture2D), (LPVOID*)&texture));
             texture->GetDesc(&desc);
@@ -311,12 +314,18 @@ HRESULT source_vidcap::source_reader_callback_t::OnReadSample(HRESULT hr, DWORD 
 
             // texture must be copied from sample so that media foundation can work correctly;
             // media foundation has a limit for pooled samples and if it is reached
-            // media foundation begins to stall
-            {
-                using scoped_lock = std::lock_guard<std::recursive_mutex>;
-                scoped_lock lock(*source->context_mutex);
-                source->d3d11devctx->CopyResource(frame.buffer->texture, texture);
-            }
+            // media foundation begins to stall;
+            // the copying also must be done this way;
+            // trying to copy the texture directly causes a race condition which
+            // manifests as hitching
+            CHECK_HR(hr = MFCreateDXGISurfaceBuffer(
+                IID_ID3D11Texture2D,
+                frame.buffer->texture,
+                0,
+                FALSE,
+                &new_buffer));
+            CHECK_HR(hr = new_buffer->QueryInterface(&new_buffer_2d));
+            CHECK_HR(hr = buffer_2d->Copy2DTo(new_buffer_2d));
 
             frame.params.source_rect.top = frame.params.source_rect.left = 0.f;
             frame.params.source_rect.right = (FLOAT)source->frame_width;
