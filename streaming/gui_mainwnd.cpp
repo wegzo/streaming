@@ -305,6 +305,10 @@ int gui_mainwnd::OnCreate(LPCREATESTRUCT /*createstruct*/)
     loop->AddMessageFilter(this);
     loop->AddIdleHandler(this);
 
+    CIcon icon;
+    icon.LoadIconW(IDI_ICON1);
+    this->SetIcon(icon);
+
     // create windows and control_pipeline
     this->ctrl_pipeline.reset(new control_pipeline);
     this->ctrl_pipeline->event_provider.register_event_handler(*this);
