@@ -325,7 +325,11 @@ HRESULT source_vidcap::source_reader_callback_t::OnReadSample(HRESULT hr, DWORD 
                 FALSE,
                 &new_buffer));
             CHECK_HR(hr = new_buffer->QueryInterface(&new_buffer_2d));
-            CHECK_HR(hr = buffer_2d->Copy2DTo(new_buffer_2d));
+            {
+                using scoped_lock = std::lock_guard<std::recursive_mutex>;
+                scoped_lock lock(*source->context_mutex);
+                CHECK_HR(hr = buffer_2d->Copy2DTo(new_buffer_2d));
+            }
 
             frame.params.source_rect.top = frame.params.source_rect.left = 0.f;
             frame.params.source_rect.right = (FLOAT)source->frame_width;
