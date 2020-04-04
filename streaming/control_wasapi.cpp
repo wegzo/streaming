@@ -161,7 +161,7 @@ LRESULT gui_wasapidlg::OnVolumeEditChanged(WORD /*wNotifyCode*/, WORD /*wID*/, H
 
 LRESULT gui_wasapidlg::OnVolumeEditSetFocus(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    this->wnd_volume_edit.SetSelAll();
+    /*this->wnd_volume_edit.SetSelAll();*/
     return 0;
 }
 
