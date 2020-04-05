@@ -135,8 +135,8 @@ void request_queue<T>::next_topology()
     // there must be a valid topology
     assert_(!this->requests.empty());
 
-    single_request_queue& queue =
-        this->requests[this->get_topology_index(this->first_topology_number)]; queue;
+    [[maybe_unused]] single_request_queue& queue =
+        this->requests[this->get_topology_index(this->first_topology_number)];
 
     // the current topology queue must be empty
     assert_(queue.requests.empty());
