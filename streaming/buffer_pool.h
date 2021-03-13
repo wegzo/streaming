@@ -284,7 +284,7 @@ void buffer_pooled<T>::deleter(buffer_raw_t* buffer)
 
     // move the buffer back to sample pool if the pool isn't disposed yet;
     // otherwise, this object will be destroyed after the std bind releases the last reference
-    buffer_pool::scoped_lock lock(this->pool->mutex);
+    typename buffer_pool::scoped_lock lock(this->pool->mutex);
     if(!this->pool->is_disposed())
         this->pool->container.push(this->shared_from_this<buffer_pooled>());
 }

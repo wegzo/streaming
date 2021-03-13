@@ -19,10 +19,12 @@ class source_buffering final : public source_base<OutArgs>
 {
     friend class stream_buffering<OutArgs>;
 public:
-    typedef OutArgs out_args_t;
-    typedef stream_buffering<out_args_t> stream_buffering;
-    typedef std::shared_ptr<stream_buffering> stream_buffering_t;
-    typedef typename source_base<OutArgs>::stream_source_base_t stream_source_base_t;
+    using source_base = source_base<OutArgs>;
+    using out_args_t = OutArgs;
+    using stream_buffering = stream_buffering<out_args_t>;
+    using stream_buffering_t = std::shared_ptr<stream_buffering>;
+    using stream_source_base_t = typename source_base::stream_source_base_t;
+    using request_t = typename source_base::request_t;
 private:
     time_unit latency;
 
@@ -66,14 +68,14 @@ typedef std::shared_ptr<stream_buffering_video> stream_buffering_video_t;
 
 
 template<class T>
-source_buffering<T>::source_buffering(const media_session_t& session) : source_base<T>(session)
+source_buffering<T>::source_buffering(const media_session_t& session) : source_base(session)
 {
 }
 
 template<class T>
 void source_buffering<T>::initialize(const control_class_t& ctrl_pipeline, time_unit latency)
 {
-    this->source_base<T>::initialize(ctrl_pipeline);
+    this->source_base::initialize(ctrl_pipeline);
     this->latency = latency;
 }
 

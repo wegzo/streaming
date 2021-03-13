@@ -182,6 +182,11 @@ template<typename FrameType>
 class media_sample_audio_frames_template : public media_sample_frames_template<FrameType>
 {
 public:
+    using media_sample_frames_template = media_sample_frames_template<FrameType>;
+    using sample_t = typename media_sample_frames_template::sample_t;
+    using media_sample_frames_template::undef_end;
+    using media_sample_frames_template::undef_first;
+public:
     virtual ~media_sample_audio_frames_template() {}
 
     // moves part from this to 'to'
@@ -220,6 +225,12 @@ class media_sample_video_frames_template :
     // TODO: use vector
     public media_sample_frames_template<FrameType, std::deque<FrameType>>
 {
+public:
+    using media_sample_frames_template = 
+        media_sample_frames_template<FrameType, std::deque<FrameType>>;
+    using sample_t = typename media_sample_frames_template::sample_t;
+    using media_sample_frames_template::undef_end;
+    using media_sample_frames_template::undef_first;
 public:
     virtual ~media_sample_video_frames_template() {}
     bool move_frames_to(media_sample_video_frames_template* to, frame_unit end);

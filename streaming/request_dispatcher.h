@@ -111,7 +111,7 @@ request_dispatcher<T>::request_dispatcher() :
 template<class T>
 request_dispatcher<T>::~request_dispatcher()
 {
-    buffer_pool_state_object_t::scoped_lock lock(this->buffer_pool_state_object->mutex);
+    typename buffer_pool_state_object_t::scoped_lock lock(this->buffer_pool_state_object->mutex);
     this->buffer_pool_state_object->dispose();
 }
 
@@ -145,7 +145,7 @@ void request_dispatcher<T>::dispatch_request(request_t&& request, std::function<
 
     CComPtr<state_object> params;
     {
-        buffer_pool_state_object_t::scoped_lock lock(this->buffer_pool_state_object->mutex);
+        typename buffer_pool_state_object_t::scoped_lock lock(this->buffer_pool_state_object->mutex);
         state_object_t state_object = this->buffer_pool_state_object->acquire_buffer();
         state_object->initialize(state_object);
 

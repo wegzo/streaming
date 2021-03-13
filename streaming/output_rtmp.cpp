@@ -182,6 +182,8 @@ void output_rtmp::initialize(
     assert_(audio_type);
 
     HRESULT hr = S_OK;
+    UINT32 aac_payload_type = 0;
+
     this->video_type = video_type;
     this->audio_type = audio_type;
     this->recording_initiator = recording_initiator;
@@ -194,7 +196,7 @@ void output_rtmp::initialize(
     CHECK_HR(hr = this->video_type->GetUINT32(MF_MT_AVG_BITRATE, &this->bitrate));
 
     // The stream should contain raw_data_block elements only
-    UINT32 aac_payload_type = MFGetAttributeUINT32(this->audio_type, MF_MT_AAC_PAYLOAD_TYPE, 0);
+    aac_payload_type = MFGetAttributeUINT32(this->audio_type, MF_MT_AAC_PAYLOAD_TYPE, 0);
     if(aac_payload_type != 0)
         CHECK_HR(hr = E_UNEXPECTED);
 
@@ -258,6 +260,7 @@ std::string output_rtmp::create_audio_specific_config() const
     uint16_t padding;                   // 3 bits
 
     UINT32 samples_per_second, audio_num_channels;
+    uint16_t audio_specific_config = 0;
 
     audioObjectType = 2; // AAC LC
 
@@ -279,7 +282,6 @@ std::string output_rtmp::create_audio_specific_config() const
 
     padding = 0;
 
-    uint16_t audio_specific_config = 0;
     audio_specific_config |= audioObjectType        << (16 - 5);
     audio_specific_config |= samplingFrequencyIndex << (16 - 5 - 4);
     audio_specific_config |= channelConfiguration   << (16 - 5 - 4 - 4);
@@ -475,6 +477,8 @@ std::string output_rtmp::create_avc_decoder_configuration_record(
     AVCDecoderConfigurationRecord* record = (AVCDecoderConfigurationRecord*)record_str.data();
     UINT32 profile_indication, level_indication;
 
+    char* p = nullptr;
+
     record->configurationVersion = 1;
 
     CHECK_HR(hr = this->video_type->GetUINT32(MF_MT_MPEG2_PROFILE, &profile_indication));
@@ -497,7 +501,7 @@ std::string output_rtmp::create_avc_decoder_configuration_record(
     record->numOfSequenceParameterSets = 1;
     record->sequenceParameterSetLength = _byteswap_ushort((uint16_t)sps_nalu.size());
 
-    char* p = (char*)memcpy(
+    p = (char*)memcpy(
         record_str.data() + sizeof(AVCDecoderConfigurationRecord),
         sps_nalu.data(),
         sps_nalu.size());

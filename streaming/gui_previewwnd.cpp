@@ -235,6 +235,8 @@ void gui_previewwnd::OnMouseMove(UINT /*nFlags*/, CPoint point)
         sizing_points, ARRAYSIZE(sizing_points));
     const D2D1_POINT_2F pointer_pos = D2D1::Point2F((FLOAT)point.x, (FLOAT)point.y);
 
+    bool left_scaled = false, top_scaled = false, right_scaled = false, bottom_scaled = false;
+
     if(this->moving || this->scaling)
         goto dragging;
 
@@ -243,7 +245,6 @@ void gui_previewwnd::OnMouseMove(UINT /*nFlags*/, CPoint point)
 
     // TODO: previewwnd should probably handle the drawing of sizing points
 
-    bool left_scaled = false, top_scaled = false, right_scaled = false, bottom_scaled = false;
     if(pointer_pos.x >= (sizing_points[0].x - size_point_radius) &&
         pointer_pos.x <= (sizing_points[0].x + size_point_radius) &&
         pointer_pos.y >= (sizing_points[0].y - size_point_radius) &&
@@ -431,11 +432,11 @@ void gui_previewwnd::update_preview()
     D2D1_RECT_F dest_rect;
     D2D1::Matrix3x2F dest_m;
     control_video::video_params_t video_params = {0};
+    control_video* video_control = nullptr;
 
     if(this->ctrl_pipeline.get_selected_controls().empty())
         goto out;
-    control_video* video_control =
-        dynamic_cast<control_video*>(this->ctrl_pipeline.get_selected_controls()[0]);
+    video_control = dynamic_cast<control_video*>(this->ctrl_pipeline.get_selected_controls()[0]);
     if(!video_control)
         goto out;
 

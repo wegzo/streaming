@@ -151,42 +151,42 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LlvmDebug|Win32'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)x64/Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LlvmDebug|x64'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDisabled|Win32'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LlvmReleaseDisabled|Win32'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)x64/Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDisabled|x64'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)x64/Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LlvmReleaseDisabled|x64'">
-    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL90_4140_Final\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)third-party\rtmpdump;$(SolutionDir)third-party\WTL10_10320_Release\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Label="LLVM" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClangClExecutable>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\Llvm\bin\clang-cl.exe</ClangClExecutable>
@@ -226,7 +226,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="(disabled)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="(disabled)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -248,7 +248,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -270,7 +270,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="(disabled)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="(disabled)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <FloatingPointModel>Fast</FloatingPointModel>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
@@ -296,7 +296,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="(disabled)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="(disabled)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <FloatingPointModel>Fast</FloatingPointModel>
       <DisableSpecificWarnings>4458;4456</DisableSpecificWarnings>
@@ -324,7 +324,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="%(Filename)%(Extension)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="%(Filename)%(Extension)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -350,7 +350,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="(disabled)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="(disabled)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -376,7 +376,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="(disabled)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="(disabled)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -402,7 +402,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="%(Filename)%(Extension)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="%(Filename)%(Extension)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -429,7 +429,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="(disabled)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="(disabled)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -458,7 +458,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;BASE_FILE="(disabled)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEFAULT_MAX_REQUESTS=3;_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS;BASE_FILE="(disabled)";NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>

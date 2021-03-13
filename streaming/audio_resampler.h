@@ -128,11 +128,13 @@ frame_unit audio_resampler::resample(
         HRESULT hr = S_OK;
         sample_t consec_frames = in;
 
+        const frame_unit frame_pos = frame_next_pos;
+        frame_unit frame_dur = 0;
+
         CHECK_HR(hr = out_sample->GetBufferByIndex(0, &mf_buffer));
         CHECK_HR(hr = mf_buffer->GetCurrentLength(&buflen));
 
-        const frame_unit frame_pos = frame_next_pos;
-        const frame_unit frame_dur = buflen / block_align;
+        frame_dur = buflen / block_align;
 
         consec_frames.memory_host = buffer;
         consec_frames.pos = frame_pos;

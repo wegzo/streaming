@@ -302,6 +302,11 @@ HRESULT transform_h264_encoder::feed_encoder(const media_sample_video_frame& fra
 
     // sample tracker should be used for each texture individually
 
+    time_unit sample_time = convert_to_time_unit(frame.pos,
+        this->session->frame_rate_num, this->session->frame_rate_den);
+    const time_unit sample_duration = convert_to_time_unit(1,
+        this->session->frame_rate_num, this->session->frame_rate_den);
+
     // create the input sample buffer
     CHECK_HR(hr = MFCreateDXGISurfaceBuffer(IID_ID3D11Texture2D,
         frame.buffer->texture, 0, FALSE, &buffer));
@@ -309,11 +314,6 @@ HRESULT transform_h264_encoder::feed_encoder(const media_sample_video_frame& fra
         frame.buffer, buffer, this->use_system_memory));
 
     assert_(frame.dur == 1);
-
-    time_unit sample_time = convert_to_time_unit(frame.pos,
-        this->session->frame_rate_num, this->session->frame_rate_den);
-    const time_unit sample_duration = convert_to_time_unit(1,
-        this->session->frame_rate_num, this->session->frame_rate_den);
 
     sample_time -= this->time_shift;
     if(sample_time < 0)
@@ -362,12 +362,13 @@ void transform_h264_encoder::events_cb(void* unk)
         HRESULT hr = S_OK;
         CComPtr<IMFMediaEvent> media_event;
 
+        MediaEventType type = MEUnknown;
+        HRESULT status = S_OK;
+
         // get the event from the event queue
         CHECK_HR(hr = this->event_generator->EndGetEvent(result, &media_event));
 
         // process the event
-        MediaEventType type = MEUnknown;
-        HRESULT status = S_OK;
         CHECK_HR(hr = media_event->GetType(&type));
         CHECK_HR(hr = media_event->GetStatus(&status));
 

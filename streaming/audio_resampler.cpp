@@ -81,6 +81,9 @@ void audio_resampler::initialize(
     this->in_channels = in_channels;
     this->in_bit_depth = in_bit_depth;
 
+    const UINT32 in_block_align = this->in_bit_depth / 8 * this->in_channels;
+    const UINT32 out_block_align = this->out_bit_depth / 8 * this->out_channels;
+
     HRESULT hr = S_OK;
     CComPtr<IWMResamplerProps> props;
 
@@ -92,7 +95,6 @@ void audio_resampler::initialize(
     CHECK_HR(hr = props->SetHalfFilterLength(HALF_FILTER_LENGTH));
 
     // set output type
-    const UINT32 out_block_align = this->out_bit_depth / 8 * this->out_channels;
     CHECK_HR(hr = MFCreateMediaType(&this->output_type));
     CHECK_HR(hr = this->output_type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio));
     CHECK_HR(hr = this->output_type->SetGUID(MF_MT_SUBTYPE,
@@ -105,7 +107,6 @@ void audio_resampler::initialize(
         this->out_sample_rate * out_block_align));
 
     // set input type
-    const UINT32 in_block_align = this->in_bit_depth / 8 * this->in_channels;
     CHECK_HR(hr = MFCreateMediaType(&this->input_type));
     CHECK_HR(hr = this->input_type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio));
     CHECK_HR(hr = this->input_type->SetGUID(MF_MT_SUBTYPE,
